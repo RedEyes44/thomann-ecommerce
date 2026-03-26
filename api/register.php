@@ -1,4 +1,8 @@
 <?php
+
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+
 // Diciamo al browser che risponderemo in JSON
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *'); 
@@ -43,19 +47,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         http_response_code(201); // 201 Created
         echo json_encode(['messaggio' => 'Registrazione completata con successo!']);
 
-    } catch (PDOException $e) {
-        // 7. Gestione degli errori (es. Email già esistente)
+   } catch (PDOException $e) {
         // L'errore 23000 in SQL significa "Violazione di un vincolo di unicità"
-        if ($e->getCode() == 23000) {
+        if ($e->getCode() == 23000 || $e->getCode() == '23000') {
             http_response_code(409); // 409 Conflict
-            echo json_encode(['errore' => 'Questa email è già registrata. Usa il login.']);
+            // NIENTE ACCENTI QUI SOTTO!
+            echo json_encode(['errore' => 'Questa email risulta gia registrata. Usa il login.']);
+            exit;
         } else {
             http_response_code(500);
             echo json_encode(['errore' => 'Errore del server durante la registrazione.']);
+            exit;
         }
     }
 } else {
     http_response_code(405); 
     echo json_encode(['errore' => 'Metodo non consentito. Usa POST.']);
+    exit;
 }
 ?>
