@@ -65,7 +65,7 @@
                                     <span class="badge bg-secondary mb-2 w-50">${prodotto.nome_categoria}</span>
                                     <h5 class="card-title">${prodotto.nome}</h5>
                                     <p class="card-text text-muted small">${prodotto.descrizione.substring(0, 60)}...</p>
-                                    <h4 class="mt-auto text-primary">� ${prodotto.prezzo}</h4>
+                                    <h4 class="mt-auto text-primary">� ${prodotto.prezzo}</h4>
                                     <button class="btn btn-success mt-3" onclick="aggiungiAlCarrello(${prodotto.id_prodotto})">
                                         Aggiungi al Carrello
                                     </button>
@@ -83,13 +83,62 @@
             }
         }
 
-        // Funzione segnaposto per il carrello (la svilupperemo nella Fase 4)
-        function aggiungiAlCarrello(idProdotto) {
-            alert("Hai cliccato aggiungi per il prodotto ID: " + idProdotto + ". Lo faremo funzionare nella Fase 4!");
+        // Funzione VERA per aggiungere al carrello
+        async function aggiungiAlCarrello(idProdotto) {
+            try {
+                // Facciamo una richiesta POST alla nostra API
+                const risposta = await fetch('../api/carrello.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id_prodotto: idProdotto })
+                });
+                
+                const risultato = await risposta.json();
+
+                if (risposta.ok) {
+                    // Se è andato tutto bene, aggiorniamo il contatore in alto!
+                    aggiornaContatoreCarrello();
+                    
+                    // Un piccolo feedback visivo per l'utente
+                    alert("🎸 " + risultato.messaggio); 
+                } else {
+                    alert("Errore: " + risultato.errore);
+                }
+            } catch (errore) {
+                console.error("Errore aggiunta carrello:", errore);
+            }
         }
 
-        // Avviamo la funzione appena la pagina si apre
+        // Funzione per leggere quanti pezzi ci sono e aggiornare la Navbar
+        async function aggiornaContatoreCarrello() {
+            try {
+                // Facciamo una richiesta GET (di default) all'API
+                const risposta = await fetch('../api/carrello.php');
+                const dati = await risposta.json();
+                
+                // Troviamo il bottone del carrello (usiamo la classe .btn-warning)
+                // e gli cambiamo il testo con il totale degli articoli
+                const bottoniCarrello = document.querySelectorAll('.btn-warning'); 
+                bottoniCarrello.forEach(btn => {
+                    btn.innerHTML = `🛒 Carrello (${dati.totale_articoli})`;
+                });
+            } catch (errore) {
+                console.error("Errore lettura carrello:", errore);
+            }
+        }
+
+
+
+        // Avviamo le funzioni appena la pagina si apre
         caricaCatalogo();
+        
+        // Prima controlliamo chi è loggato, POI aggiorniamo il carrello
+        controllaSessione().then(() => {
+            aggiornaContatoreCarrello();
+        });
+
+
+
     </script>
 </body>
 </html>
