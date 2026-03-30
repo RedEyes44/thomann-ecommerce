@@ -112,8 +112,15 @@
         // Funzione per leggere quanti pezzi ci sono e aggiornare la Navbar
         async function aggiornaContatoreCarrello() {
             try {
-                // Facciamo una richiesta GET (di default) all'API
-                const risposta = await fetch('../api/carrello.php');
+                
+                // Cancella questa:
+                // const risposta = await fetch('../api/carrello.php');
+
+                // E metti questa. Aggiungiamo un parametro che tira uno schiaffo al browser:
+                            
+                const risposta = await fetch('../api/carrello.php', { cache: 'no-store' });
+
+
                 const dati = await risposta.json();
                 
                 // Troviamo il bottone del carrello (usiamo la classe .btn-warning)
