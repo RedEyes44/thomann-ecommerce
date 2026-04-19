@@ -18,18 +18,11 @@
 
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
-<<<<<<< HEAD
             <a class="navbar-brand" href="index.html">🎸 Thomann Clone</a>
             <div class="d-flex" id="menu-utente">
                 <a href="login.html" class="btn btn-outline-light me-2">Login</a>
                 <a href="registrazione.html" class="btn btn-outline-light me-2">Registrati</a>
                 <a href="#" class="btn btn-warning">🛒 Carrello (0)</a>
-=======
-            <a class="navbar-brand" href="#">?? Thomann Clone</a>
-            <div class="d-flex">
-                <a href="login.html" class="btn btn-outline-light me-2">Login</a>
-                <a href="registrazione.htm" class="btn btn-warning">?? Carrello (0)</a>
->>>>>>> fa72cdde6908608e0f2fcd1b479b1bc2d12ab500
             </div>
         </div>
     </nav>
@@ -60,11 +53,7 @@
                                     <span class="badge bg-secondary mb-2 w-50">${prodotto.nome_categoria}</span>
                                     <h5 class="card-title">${prodotto.nome}</h5>
                                     <p class="card-text text-muted small">${prodotto.descrizione.substring(0, 60)}...</p>
-<<<<<<< HEAD
                                     <h4 class="mt-auto text-primary">€ ${prodotto.prezzo}</h4>
-=======
-                                    <h4 class="mt-auto text-primary">� ${prodotto.prezzo}</h4>
->>>>>>> fa72cdde6908608e0f2fcd1b479b1bc2d12ab500
                                     <button class="btn btn-success mt-3" onclick="aggiungiAlCarrello(${prodotto.id_prodotto})">
                                         Aggiungi al Carrello
                                     </button>
@@ -77,40 +66,21 @@
             }
         }
 
-<<<<<<< HEAD
         async function aggiungiAlCarrello(idProdotto) {
             try {
-=======
-        // Funzione VERA per aggiungere al carrello
-        async function aggiungiAlCarrello(idProdotto) {
-            try {
-                // Facciamo una richiesta POST alla nostra API
->>>>>>> fa72cdde6908608e0f2fcd1b479b1bc2d12ab500
                 const risposta = await fetch('../api/carrello.php', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ id_prodotto: idProdotto })
                 });
-<<<<<<< HEAD
                 const risultato = await risposta.json();
                 if (risposta.ok) {
                     aggiornaContatoreCarrello();
-=======
-                
-                const risultato = await risposta.json();
-
-                if (risposta.ok) {
-                    // Se è andato tutto bene, aggiorniamo il contatore in alto!
-                    aggiornaContatoreCarrello();
-                    
-                    // Un piccolo feedback visivo per l'utente
->>>>>>> fa72cdde6908608e0f2fcd1b479b1bc2d12ab500
                     alert("🎸 " + risultato.messaggio); 
                 } else {
                     alert("Errore: " + risultato.errore);
                 }
             } catch (errore) {
-<<<<<<< HEAD
                 console.error(errore);
             }
         }
@@ -153,49 +123,6 @@
         controllaSessione().then(() => {
             aggiornaContatoreCarrello();
         });
-=======
-                console.error("Errore aggiunta carrello:", errore);
-            }
-        }
-
-        // Funzione per leggere quanti pezzi ci sono e aggiornare la Navbar
-        async function aggiornaContatoreCarrello() {
-            try {
-                
-                // Cancella questa:
-                // const risposta = await fetch('../api/carrello.php');
-
-                // E metti questa. Aggiungiamo un parametro che tira uno schiaffo al browser:
-                            
-                const risposta = await fetch('../api/carrello.php', { cache: 'no-store' });
-
-
-                const dati = await risposta.json();
-                
-                // Troviamo il bottone del carrello (usiamo la classe .btn-warning)
-                // e gli cambiamo il testo con il totale degli articoli
-                const bottoniCarrello = document.querySelectorAll('.btn-warning'); 
-                bottoniCarrello.forEach(btn => {
-                    btn.innerHTML = `🛒 Carrello (${dati.totale_articoli})`;
-                });
-            } catch (errore) {
-                console.error("Errore lettura carrello:", errore);
-            }
-        }
-
-
-
-        // Avviamo le funzioni appena la pagina si apre
-        caricaCatalogo();
-        
-        // Prima controlliamo chi è loggato, POI aggiorniamo il carrello
-        controllaSessione().then(() => {
-            aggiornaContatoreCarrello();
-        });
-
-
-
->>>>>>> fa72cdde6908608e0f2fcd1b479b1bc2d12ab500
     </script>
 </body>
 </html>
