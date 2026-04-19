@@ -3,61 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Thomann Clone - Il tuo negozio di strumenti</title>
+    <title>Thomann Clone - Catalogo</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        /* Sistemiamo le immagini degli strumenti */
-    .card-img-top {
-        height: 250px;
-        object-fit: contain; /* ECCO LA MAGIA: mostra tutta l'immagine senza tagliarla */
-        padding: 15px;       /* Diamo un po' di respiro ai bordi */
-        background-color: #ffffff; /* Sfondo bianco per far risaltare lo strumento */
-    }
+        .card-img-top {
+            height: 250px;
+            object-fit: contain; 
+            padding: 15px;       
+            background-color: #ffffff; 
+        }
     </style>
 </head>
 <body class="bg-light">
 
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
-            <a class="navbar-brand" href="#">?? Thomann Clone</a>
-            <div class="d-flex">
-                <a href="#" class="btn btn-outline-light me-2">Login</a>
-                <a href="#" class="btn btn-warning">?? Carrello (0)</a>
+            <a class="navbar-brand" href="index.html">🎸 Thomann Clone</a>
+            <div class="d-flex" id="menu-utente">
+                <a href="login.html" class="btn btn-outline-light me-2">Login</a>
+                <a href="registrazione.html" class="btn btn-outline-light me-2">Registrati</a>
+                <a href="#" class="btn btn-warning">🛒 Carrello (0)</a>
             </div>
         </div>
     </nav>
 
     <div class="container mt-5">
         <h2 class="mb-4">Il nostro Catalogo</h2>
-        
         <div class="row" id="catalogo">
             <div class="col-12 text-center">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Caricamento...</span>
-                </div>
                 <p>Caricamento strumenti dal magazzino...</p>
             </div>
         </div>
     </div>
 
     <script>
-        // Funzione per recuperare e stampare i prodotti
         async function caricaCatalogo() {
             try {
-                // 1. Chiamiamo l'API che hai appena creato nel backend
-                // Nota: usiamo il percorso relativo per risalire alla cartella api
                 const risposta = await fetch('../api/prodotti.php');
-                
-                // 2. Trasformiamo la risposta in un array JavaScript
                 const prodotti = await risposta.json();
-                
-                // 3. Prendiamo il contenitore vuoto nell'HTML
                 const contenitore = document.getElementById('catalogo');
-                contenitore.innerHTML = ''; // Svuotiamo il caricamento
+                contenitore.innerHTML = ''; 
                 
-                // 4. Cicliamo i prodotti e creiamo una "Card" HTML per ognuno
                 prodotti.forEach(prodotto => {
-                    const cardHTML = `
+                    contenitore.innerHTML += `
                         <div class="col-md-4 col-sm-6 mb-4">
                             <div class="card h-100 shadow-sm">
                                 <img src="${prodotto.immagine_url}" class="card-img-top" alt="${prodotto.nome}">
@@ -65,31 +53,76 @@
                                     <span class="badge bg-secondary mb-2 w-50">${prodotto.nome_categoria}</span>
                                     <h5 class="card-title">${prodotto.nome}</h5>
                                     <p class="card-text text-muted small">${prodotto.descrizione.substring(0, 60)}...</p>
-                                    <h4 class="mt-auto text-primary">� ${prodotto.prezzo}</h4>
+                                    <h4 class="mt-auto text-primary">€ ${prodotto.prezzo}</h4>
                                     <button class="btn btn-success mt-3" onclick="aggiungiAlCarrello(${prodotto.id_prodotto})">
                                         Aggiungi al Carrello
                                     </button>
                                 </div>
                             </div>
-                        </div>
-                    `;
-                    // Aggiungiamo la card al contenitore
-                    contenitore.innerHTML += cardHTML;
+                        </div>`;
                 });
-                
             } catch (errore) {
-                console.error("Errore di connessione al backend:", errore);
                 document.getElementById('catalogo').innerHTML = '<div class="alert alert-danger">Impossibile caricare il catalogo.</div>';
             }
         }
 
-        // Funzione segnaposto per il carrello (la svilupperemo nella Fase 4)
-        function aggiungiAlCarrello(idProdotto) {
-            alert("Hai cliccato aggiungi per il prodotto ID: " + idProdotto + ". Lo faremo funzionare nella Fase 4!");
+        async function aggiungiAlCarrello(idProdotto) {
+            try {
+                const risposta = await fetch('../api/carrello.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id_prodotto: idProdotto })
+                });
+                const risultato = await risposta.json();
+                if (risposta.ok) {
+                    aggiornaContatoreCarrello();
+                    alert("🎸 " + risultato.messaggio); 
+                } else {
+                    alert("Errore: " + risultato.errore);
+                }
+            } catch (errore) {
+                console.error(errore);
+            }
         }
 
-        // Avviamo la funzione appena la pagina si apre
+        async function aggiornaContatoreCarrello() {
+            try {
+                const risposta = await fetch('../api/carrello.php', { cache: 'no-store' });
+                const dati = await risposta.json();
+                const bottoniCarrello = document.querySelectorAll('.btn-warning'); 
+                bottoniCarrello.forEach(btn => {
+                    btn.innerHTML = `🛒 Carrello (${dati.totale_articoli})`;
+                });
+            } catch (errore) {
+                console.error(errore);
+            }
+        }
+
+        async function controllaSessione() {
+            try {
+                const risposta = await fetch('../api/me.php');
+                const utente = await risposta.json();
+                const menu = document.getElementById('menu-utente');
+
+                if (utente.loggato) {
+                    menu.innerHTML = `
+                        <span class="navbar-text text-white me-3">Ciao, <b>${utente.nome}</b>!</span>
+                        <a href="#" class="btn btn-warning me-2">🛒 Carrello (0)</a>
+                        <button onclick="eseguiLogout()" class="btn btn-danger">Esci</button>
+                    `;
+                }
+            } catch (errore) {}
+        }
+
+        async function eseguiLogout() {
+            await fetch('../api/logout.php');
+            window.location.reload(); 
+        }
+
         caricaCatalogo();
+        controllaSessione().then(() => {
+            aggiornaContatoreCarrello();
+        });
     </script>
 </body>
 </html>
