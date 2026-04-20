@@ -46,3 +46,4 @@ INSERT INTO `prodotti` (`nome`, `descrizione`, `prezzo`, `giacenza`, `immagine_u
 ('Martin D-28', 'Acustica dreadnought di fascia alta.', 3200.00, 2, 'img/martin.jpg', 2),
 ('Yamaha C40II', 'Chitarra classica per principianti.', 139.00, 45, 'img/classica.jpg', 2),
 ('Fender Player Jazz Bass', 'Basso a 4 corde, due single-coil.', 850.00, 8, 'img/jazzbass.jpg', 3);
+

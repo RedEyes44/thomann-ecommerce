@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Il tuo Carrello - Thomann Clone</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .img-carrello { width: 80px; height: 80px; object-fit: contain; }
+    </style>
+</head>
+<body class="bg-light">
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">🎸 Thomann Clone</a>
+            <div class="d-flex" id="menu-utente">
+                </div>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        <h2 class="mb-4">Il tuo Carrello 🛒</h2>
+
+        <div class="row">
+            <div class="col-lg-8 mb-4">
+                <div class="card shadow-sm">
+                    <div class="card-body" id="lista-carrello">
+                        <div class="text-center">
+                            <div class="spinner-border text-primary" role="status"></div>
+                            <p>Caricamento carrello...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card shadow-sm border-primary">
+                    <div class="card-body">
+                        <h4 class="card-title mb-4">Riepilogo Ordine</h4>
+                        <div class="d-flex justify-content-between mb-3">
+                            <span>Articoli totali:</span>
+                            <strong id="totale-articoli">0</strong>
+                        </div>
+                        <div class="d-flex justify-content-between mb-4">
+                            <span class="fs-5">Totale (IVA incl.):</span>
+                            <strong class="fs-4 text-primary">€ <span id="totale-euro">0.00</span></strong>
+                        </div>
+                        
+                        <button class="btn btn-success w-100 py-2 fs-5 fw-bold" onclick="eseguiCheckout()" id="btn-checkout" disabled>
+                            Procedi al Pagamento
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 1. Riprendiamo la funzione per gestire la Navbar e il login
+        async function controllaSessione() {
+            try {
+                const risposta = await fetch('../api/me.php');
+                const utente = await risposta.json();
+                const menu = document.getElementById('menu-utente');
+
+                if (utente.loggato) {
+                    menu.innerHTML = `
+                        <span class="navbar-text text-white me-3">Ciao, <b>${utente.nome}</b>!</span>
+                        <button onclick="eseguiLogout()" class="btn btn-sm btn-danger">Esci</button>
+                    `;
+                } else {
+                    // Se non è loggato, lo rimandiamo al login! Non può stare nel carrello da sconosciuto.
+                    window.location.href = 'login.html';
+                }
+            } catch (errore) {
+                console.log("Errore sessione.");
+            }
+        }
+
+        async function eseguiLogout() {
+            await fetch('../api/logout.php');
+            window.location.href = 'index.html';
+        }
+
+        // 2. Funzione per stampare i prodotti a schermo
+        async function caricaDatiCarrello() {
+            try {
+                // Chiediamo all'API cosa c'è nel carrello (ricorda il no-store per fregare la cache!)
+                const risposta = await fetch('../api/carrello.php', { cache: 'no-store' });
+                const dati = await risposta.json();
+                
+                const contenitore = document.getElementById('lista-carrello');
+                
+                // Se il carrello è vuoto
+                if (dati.carrello.length === 0) {
+                    contenitore.innerHTML = `
+                        <div class="text-center py-5">
+                            <h5 class="text-muted">Il tuo carrello è desolatamente vuoto.</h5>
+                            <a href="index.html" class="btn btn-primary mt-3">Torna al Catalogo</a>
+                        </div>
+                    `;
+                    return; // Fermiamo la funzione qui
+                }
+
+                // Se ci sono prodotti, creiamo la lista
+                contenitore.innerHTML = ''; // Svuotiamo il caricamento
+                
+                dati.carrello.forEach(item => {
+                    const prezzoTotaleRiga = (item.prezzo * item.quantita).toFixed(2);
+                    contenitore.innerHTML += `
+                        <div class="d-flex align-items-center border-bottom pb-3 mb-3">
+                            <img src="${item.immagine_url}" class="img-carrello rounded border me-3" alt="${item.nome}">
+                            <div class="flex-grow-1">
+                                <h5 class="mb-1">${item.nome}</h5>
+                                <small class="text-muted">Prezzo singolo: € ${item.prezzo}</small>
+                            </div>
+                            <div class="text-center px-4">
+                                <span class="d-block text-muted small">Quantità</span>
+                                <strong>x${item.quantita}</strong>
+                            </div>
+                            <div class="text-end" style="width: 100px;">
+                                <strong class="text-primary fs-5">€ ${prezzoTotaleRiga}</strong>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                // Aggiorniamo i totali nel box a destra
+                document.getElementById('totale-articoli').innerText = dati.totale_articoli;
+                document.getElementById('totale-euro').innerText = dati.totale_euro;
+                
+                // Sblocchiamo il bottone per pagare
+                document.getElementById('btn-checkout').disabled = false;
+
+            } catch (errore) {
+                console.error("Errore:", errore);
+                document.getElementById('lista-carrello').innerHTML = '<div class="alert alert-danger">Errore di caricamento.</div>';
+            }
+        }
+
+         // Funzione VERA per il pagamento
+         async function eseguiCheckout() {
+            // Disabilitiamo il bottone e cambiamo il testo per far capire che sta caricando
+            const btn = document.getElementById('btn-checkout');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Elaborazione...';
+
+            try {
+                const risposta = await fetch('../api/checkout.php', {
+                    method: 'POST'
+                });
+                const risultato = await risposta.json();
+
+                if (risposta.ok) {
+                    // Ordine andato a buon fine!
+                    alert("🎉 " + risultato.messaggio + " (Ordine #" + risultato.id_ordine + ")");
+                    // Lo rimandiamo alla home (o potresti creare una pagina di conferma)
+                    window.location.href = 'index.html';
+                } else {
+                    alert("Errore: " + risultato.errore);
+                    btn.disabled = false;
+                    btn.innerHTML = 'Procedi al Pagamento';
+                }
+            } catch (errore) {
+                alert("Errore di connessione col server.");
+                btn.disabled = false;
+                btn.innerHTML = 'Procedi al Pagamento';
+            }
+        }
+
+        // Avvio script
+        controllaSessione().then(() => {
+            caricaDatiCarrello();
+        });
+    </script>
+</body>
+</html>
