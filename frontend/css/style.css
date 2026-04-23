@@ -1,0 +1,108 @@
+/* Importiamo un font moderno e "spigoloso" da Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap');
+
+body {
+    background-color: #121212 !important; /* Sfondo nero/grigio scurissimo (stile Ibanez) */
+    color: #e0e0e0 !important; /* Testo grigio chiaro, non bianco puro per non accecare */
+    font-family: 'Montserrat', sans-serif;
+}
+
+/* ================= NAVBAR ================= */
+.navbar {
+    background-color: #000000 !important; /* Navbar completamente nera */
+    border-bottom: 1px solid #333;
+}
+.navbar-brand {
+    font-weight: 800;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+/* ================= HERO SECTION (Il banner gigante) ================= */
+.hero-section {
+    /* Mettiamo un'immagine di sfondo figa di una chitarra con un filtro scuro sopra */
+    background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.8)), url('https://images.unsplash.com/photo-1516924962500-2b4b3b99ea02?q=80&w=2070') center/cover;
+    height: 400px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    margin-bottom: 40px;
+    border-bottom: 3px solid #d90429; /* Dettaglio rosso aggressivo */
+}
+.hero-title {
+    font-weight: 800;
+    font-size: 3.5rem;
+    text-transform: uppercase;
+    color: #fff;
+    letter-spacing: 3px;
+}
+
+/* ================= CARDS (I Prodotti) ================= */
+.card {
+    background-color: #1c1c1c !important; /* Sfondo scuro per le card */
+    border: 1px solid #333 !important; /* Bordo sottile e scuro */
+    border-radius: 0 !important; /* Niente bordi arrotondati, tutto squadrato! */
+    transition: transform 0.3s ease, border-color 0.3s ease;
+}
+.card:hover {
+    transform: translateY(-8px); /* La card si alza quando ci passi sopra col mouse */
+    border-color: #d90429 !important; /* Il bordo diventa rosso */
+    box-shadow: 0 15px 30px rgba(0,0,0,0.8) !important;
+}
+.card-img-top {
+    background-color: #2a2a2a; /* Sfondo scuro dietro la foto dello strumento */
+    padding: 30px;
+    height: 300px;
+    object-fit: contain;
+    border-bottom: 1px solid #333;
+}
+.card-title a {
+    color: #fff !important;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+.card-title a:hover {
+    color: #d90429 !important;
+}
+
+/* ================= BOTTONI ================= */
+.btn {
+    border-radius: 0 !important; /* Bottoni squadrati, zero curve */
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+}
+
+/* Il bottone di aggiunta al carrello (rosso scuro aggressivo invece che verde) */
+.btn-success {
+    background-color: #d90429 !important; 
+    border: 1px solid #d90429 !important;
+    color: white !important;
+}
+.btn-success:hover {
+    background-color: #ef233c !important; /* Rosso più chiaro al passaggio del mouse */
+    border-color: #ef233c !important;
+}
+
+/* Il bottone del carrello in alto a destra */
+.btn-warning {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    border: none;
+}
+.btn-warning:hover {
+    background-color: #cccccc !important;
+}
+
+/* I bottoni dei filtri */
+.btn-outline-dark, .btn-outline-primary, .btn-outline-success, .btn-outline-danger {
+    color: #fff !important;
+    border-color: #555 !important;
+}
+.btn-outline-dark:hover, .btn-outline-primary:hover, .btn-outline-success:hover, .btn-outline-danger:hover {
+    background-color: #333 !important;
+    border-color: #fff !important;
+}
