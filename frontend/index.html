@@ -73,14 +73,17 @@
                                 <div class="card-body d-flex flex-column">
                                     <span class="badge bg-secondary mb-2 w-50">${prodotto.nome_categoria}</span>
                                     <h5 class="card-title">
-                                        <a href="prodotto.html?id=${prodotto.id_prodotto}" class="text-decoration-none text-dark">
+                                        <a href="prodotto.html?id=${prodotto.id_prodotto}" class="text-decoration-none text-white">
                                             ${prodotto.nome}
                                         </a>
                                     </h5>
-                                    <p class="card-text text-muted small">${prodotto.descrizione.substring(0, 60)}...</p>
-                                    <h4 class="mt-auto text-primary">€ ${prodotto.prezzo}</h4>
+                                    
+                                    <p class="card-text small" style="color: #bbbbbb;">${prodotto.descrizione.substring(0, 60)}...</p>
+                                    
+                                    <h4 class="mt-auto fw-bold" style="color: #d90429;">€ ${prodotto.prezzo}</h4>
+                                    
                                     <button class="btn btn-success mt-3" onclick="aggiungiAlCarrello(${prodotto.id_prodotto})">
-                                        Aggiungi al Carrello
+                                        AGGIUNGI AL CARRELLO
                                     </button>
                                 </div>
                             </div>

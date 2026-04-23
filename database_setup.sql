@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Creato il: Apr 20, 2026 alle 08:58
+-- Creato il: Apr 23, 2026 alle 11:48
 -- Versione del server: 10.4.21-MariaDB
 -- Versione PHP: 8.0.10
 
@@ -40,7 +40,8 @@ CREATE TABLE `categorie` (
 INSERT INTO `categorie` (`id_categoria`, `nome`, `descrizione`) VALUES
 (1, 'Chitarre Elettriche', 'Strumenti solid body per rock, blues e metal.'),
 (2, 'Chitarre Acustiche', 'Chitarre folk con cassa armonica.'),
-(3, 'Bassi Elettrici', 'Il cuore della sezione ritmica.');
+(3, 'Bassi Elettrici', 'Il cuore della sezione ritmica.'),
+(4, 'Amplificatori', 'Senza un buon motore, anche la supercar più estrema non va da nessuna parte. Nel mondo delle sei e quattro corde, l\'amplificatore è il tuo V8. È l\'altra metà del tuo strumento, il muro di mattoni su cui si infrange il tuo suono.\r\n\r\nChe tu stia cercando il calore organico delle valvole per portare il tuo crunch al limite, o la precisione chirurgica di un mostro high-gain per abbattere i muri a colpi di riff, in questa sezione troverai solo potenza senza compromessi.\r\n\r\n⚡ Chitarra Elettrica: Dai combo compatti e letali perfetti per lo studio e l\'home recording, alle testate valvolari da 100W pronte a dominare i palchi più grandi. Suoni puliti cristallini, distorsioni devastanti e una dinamica che risponde a ogni singola pennata.\r\n\r\n💥 Basso Elettrico: Frequenze sismiche e definizione assoluta. Perché la sezione ritmica non si deve solo sentire: si deve percepire nello stomaco. Scopri testate ad altissimo wattaggio e cabinet progettati per spostare tonnellate d\'aria senza mai perdere l\'attacco.\r\n\r\nTrova il tuo suono. Attacca il jack. Alza il volume.');
 
 -- --------------------------------------------------------
 
@@ -61,7 +62,9 @@ CREATE TABLE `dettagli_ordine` (
 --
 
 INSERT INTO `dettagli_ordine` (`id_dettaglio`, `id_ordine`, `id_prodotto`, `quantita`, `prezzo_acquisto`) VALUES
-(1, 1, 3, 1, '3200.00');
+(1, 1, 3, 1, '3200.00'),
+(2, 2, 2, 1, '2499.99'),
+(3, 3, 2, 1, '2499.99');
 
 -- --------------------------------------------------------
 
@@ -81,7 +84,9 @@ CREATE TABLE `ordini` (
 --
 
 INSERT INTO `ordini` (`id_ordine`, `id_utente`, `data_ordine`, `totale_euro`) VALUES
-(1, 1, '2026-04-20 08:55:50', '3200.00');
+(1, 1, '2026-04-20 08:55:50', '3200.00'),
+(2, 2, '2026-04-23 11:02:37', '2499.99'),
+(3, 2, '2026-04-23 11:14:49', '2499.99');
 
 -- --------------------------------------------------------
 
@@ -130,7 +135,8 @@ CREATE TABLE `utenti` (
 --
 
 INSERT INTO `utenti` (`id_utente`, `nome`, `cognome`, `email`, `password`, `data_registrazione`) VALUES
-(1, 'Riccardo', 'Tonetto', 'riccardotonetto06@gmail.com', '$2y$10$R5zihRx8Wulc19mMMWIam.j/CHvPcQ8SC5k2l4DiXvzkWhbEiIr/C', '2026-04-20');
+(1, 'Riccardo', 'Tonetto', 'riccardotonetto06@gmail.com', '$2y$10$R5zihRx8Wulc19mMMWIam.j/CHvPcQ8SC5k2l4DiXvzkWhbEiIr/C', '2026-04-20'),
+(2, 'Matteo', 'Uvaldi', 'ciccio@gmail.com', '$2y$10$PTidxcunRoWYX0uxKCaH6.hFFdebj3zpJN6REttMVtjtrRl3Vdldu', '2026-04-23');
 
 --
 -- Indici per le tabelle scaricate
@@ -181,19 +187,19 @@ ALTER TABLE `utenti`
 -- AUTO_INCREMENT per la tabella `categorie`
 --
 ALTER TABLE `categorie`
-  MODIFY `id_categoria` int(5) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id_categoria` int(5) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT per la tabella `dettagli_ordine`
 --
 ALTER TABLE `dettagli_ordine`
-  MODIFY `id_dettaglio` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id_dettaglio` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT per la tabella `ordini`
 --
 ALTER TABLE `ordini`
-  MODIFY `id_ordine` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id_ordine` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT per la tabella `prodotti`
@@ -205,7 +211,7 @@ ALTER TABLE `prodotti`
 -- AUTO_INCREMENT per la tabella `utenti`
 --
 ALTER TABLE `utenti`
-  MODIFY `id_utente` int(5) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id_utente` int(5) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- Limiti per le tabelle scaricate
