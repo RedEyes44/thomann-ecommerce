@@ -83,11 +83,18 @@ async function aggiungiAlCarrello(idProdotto, isDettaglio = false) {
 // 2. FUNZIONI CATALOGO E PRODOTTO (index.html e prodotto.html)
 // ==========================================
 
-async function caricaCatalogo(idCategoria = null) {
+// Aggiungiamo 'testoRicerca' come secondo parametro opzionale
+async function caricaCatalogo(idCategoria = null, testoRicerca = null) {
     try {
-        let urlApi = '../api/prodotti.php';
+        let urlApi = '../api/prodotti.php?';
+        
+        // Costruiamo l'URL in base a cosa ci chiede l'utente
         if (idCategoria !== null) {
-            urlApi += `?categoria=${idCategoria}`;
+            urlApi += `categoria=${idCategoria}&`;
+        }
+        if (testoRicerca !== null && testoRicerca.trim() !== '') {
+            // codifichiamo il testo per evitare che spazi o simboli rompano l'URL
+            urlApi += `search=${encodeURIComponent(testoRicerca)}`; 
         }
 
         const risposta = await fetch(urlApi);
@@ -95,7 +102,7 @@ async function caricaCatalogo(idCategoria = null) {
         const contenitore = document.getElementById('catalogo');
         
         if (prodotti.length === 0) {
-            contenitore.innerHTML = '<div class="col-12 text-center text-muted"><h5>Nessun prodotto trovato in questa categoria.</h5></div>';
+            contenitore.innerHTML = '<div class="col-12 text-center text-light mt-5"><h4>🎸 Nessuno strumento trovato. Prova con altri termini!</h4></div>';
             return;
         }
 
@@ -104,20 +111,21 @@ async function caricaCatalogo(idCategoria = null) {
         prodotti.forEach(prodotto => {
             contenitore.innerHTML += `
                 <div class="col-md-4 col-sm-6 mb-4">
-                    <div class="card h-100 shadow-sm">
+                    <div class="card h-100 shadow-sm border-secondary" style="background-color: #1c1c1c;">
                         <a href="prodotto.html?id=${prodotto.id_prodotto}">
-                            <img src="${prodotto.immagine_url}" class="card-img-top" alt="${prodotto.nome}">
+                            <!-- Manteniamo l'effetto Ibanez -->
+                            <img src="${prodotto.immagine_url}" class="card-img-top" style="background: radial-gradient(circle at 50% 100%, #6b0515 0%, #1c1c1c 55%, #0f0f0f 100%); border-bottom: 2px solid #d90429;" alt="${prodotto.nome}">
                         </a>
                         <div class="card-body d-flex flex-column">
                             <span class="badge bg-secondary mb-2 w-50">${prodotto.nome_categoria}</span>
                             <h5 class="card-title">
-                                <a href="prodotto.html?id=${prodotto.id_prodotto}" class="text-decoration-none text-white">
+                                <a href="prodotto.html?id=${prodotto.id_prodotto}" class="text-decoration-none text-white text-uppercase fw-bold">
                                     ${prodotto.nome}
                                 </a>
                             </h5>
                             <p class="card-text small" style="color: #bbbbbb;">${prodotto.descrizione.substring(0, 60)}...</p>
                             <h4 class="mt-auto fw-bold" style="color: #d90429;">€ ${prodotto.prezzo}</h4>
-                            <button class="btn btn-success mt-3" onclick="aggiungiAlCarrello(${prodotto.id_prodotto}, false)">
+                            <button class="btn btn-success mt-3 fw-bold" onclick="aggiungiAlCarrello(${prodotto.id_prodotto}, false)">
                                 AGGIUNGI AL CARRELLO
                             </button>
                         </div>
@@ -125,9 +133,28 @@ async function caricaCatalogo(idCategoria = null) {
                 </div>`;
         });
     } catch (errore) {
-        document.getElementById('catalogo').innerHTML = '<div class="alert alert-danger">Impossibile caricare il catalogo.</div>';
+        document.getElementById('catalogo').innerHTML = '<div class="alert alert-danger bg-dark text-danger border-danger">Impossibile caricare il catalogo.</div>';
     }
 }
+
+// Questa funzione viene chiamata quando clicchi il tasto rosso "CERCA"
+function eseguiRicerca() {
+    const testo = document.getElementById('barra-ricerca').value;
+    // Passiamo "null" come categoria per cercare in TUTTO il catalogo
+    caricaCatalogo(null, testo);
+}
+
+// Extra per i PRO: far partire la ricerca quando premi "Invio" sulla tastiera!
+document.addEventListener('DOMContentLoaded', () => {
+    const inputRicerca = document.getElementById('barra-ricerca');
+    if (inputRicerca) {
+        inputRicerca.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                eseguiRicerca();
+            }
+        });
+    }
+});
 
 async function caricaDettaglio() {
     const urlParams = new URLSearchParams(window.location.search);
@@ -280,16 +307,32 @@ async function rimuoviDalCarrello(idProdotto) {
 
 async function eseguiCheckout() {
     const btn = document.getElementById('btn-checkout');
+    const indirizzoInput = document.getElementById('indirizzo-spedizione');
+    const indirizzo = indirizzoInput ? indirizzoInput.value.trim() : '';
+
+    // Blocco anti-furbetti se l'indirizzo è vuoto
+    if (!indirizzo) {
+        alert("⚠️ Devi inserire un indirizzo di spedizione per procedere!");
+        return;
+    }
+
     btn.disabled = true;
     btn.innerHTML = 'ELABORAZIONE...';
 
     try {
-        const risposta = await fetch('../api/checkout.php', { method: 'POST' });
+        // Inviamo anche l'indirizzo nel body
+        const risposta = await fetch('../api/checkout.php', { 
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ indirizzo: indirizzo }) 
+        });
+        
         const risultato = await risposta.json();
 
         if (risposta.ok) {
             alert("🎉 " + risultato.messaggio + " (Ordine #" + risultato.id_ordine + ")");
-            window.location.href = 'index.html';
+            // Li mandiamo alla pagina ordini per farli godere
+            window.location.href = 'ordini.html'; 
         } else {
             alert("Errore: " + risultato.errore);
             btn.disabled = false;

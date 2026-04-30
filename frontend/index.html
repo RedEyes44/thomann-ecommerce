@@ -27,6 +27,20 @@
 
     <div class="container mt-5">
         
+        <!-- ============================== -->
+        <!-- NUOVA BARRA DI RICERCA AVANZATA -->
+        <!-- ============================== -->
+        <div class="row justify-content-center mb-4">
+            <div class="col-md-8">
+                <div class="input-group input-group-lg shadow-sm">
+                    <span class="input-group-text bg-dark text-white border-secondary">🔍</span>
+                    <input type="text" id="barra-ricerca" class="form-control bg-dark text-white border-secondary" placeholder="Cerca chitarre, bassi, amplificatori..." style="color: white !important;">
+                    <button class="btn btn-danger fw-bold px-4" onclick="eseguiRicerca()">CERCA</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- BARRA DEI FILTRI (Esistente) -->
         <div class="d-flex justify-content-center mb-5 gap-3 flex-wrap">
             <button class="btn btn-outline-dark px-4 py-2" onclick="caricaCatalogo()">ALL GEAR</button>
             <button class="btn btn-outline-dark px-4 py-2" onclick="caricaCatalogo(1)">ELECTRIC GUITARS</button>
