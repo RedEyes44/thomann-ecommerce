@@ -29,41 +29,6 @@
             </div>
         </div>
     </div>
-    <script>
-        document.getElementById('formRegistrazione').addEventListener('submit', async function(event) {
-            event.preventDefault();
-            const dati = {
-                nome: document.getElementById('nome').value,
-                cognome: document.getElementById('cognome').value,
-                email: document.getElementById('email').value,
-                password: document.getElementById('password').value
-            };
-            const box = document.getElementById('messaggio-alert');
-            
-            try {
-                const risposta = await fetch('../api/register.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(dati)
-                });
-                const risultato = await risposta.json();
-
-                if (risposta.ok) {
-                    // Mostriamo il messaggio di successo aggiungendo che stiamo cambiando pagina
-                    box.innerHTML = `<div class="alert alert-success">${risultato.messaggio} Ti stiamo portando al Login...</div>`;
-                    
-                    // Aspettiamo 1 secondo e mezzo (1500 millisecondi) e poi lo teletrasportiamo!
-                    setTimeout(() => {
-                        window.location.href = 'login.html';
-                    }, 1500);
-                    
-                } else {
-                    box.innerHTML = `<div class="alert alert-danger">${risultato.errore}</div>`;
-                }
-            } catch (err) {
-                box.innerHTML = `<div class="alert alert-danger">Errore di rete.</div>`;
-            }
-        });
-    </script>
+    <script src="javascript/app.js"></script>
 </body>
 </html>

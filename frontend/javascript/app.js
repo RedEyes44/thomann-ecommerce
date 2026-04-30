@@ -324,27 +324,33 @@ async function caricaOrdini() {
                 prodottiHTML += `
                     <div class="d-flex align-items-center mb-2">
                         <img src="${p.immagine}" width="40" class="me-2 rounded border border-dark">
+                        <!-- FIX: Aggiunto text-white per i nomi e rosso per i prezzi -->
                         <span class="text-white">${p.nome} (x${p.quantita}) - <b style="color: #d90429;">€${p.prezzo}</b></span>
                     </div>`;
             });
 
             contenitore.innerHTML += `
+                <!-- FIX: Sfondo scuro per tutta la card -->
                 <div class="card mb-4 shadow-sm" style="background-color: #1c1c1c; border-color: #333;">
+                    
+                    <!-- FIX: Header della card grigio scuro, non più bianco! -->
                     <div class="card-header d-flex justify-content-between text-white" style="background-color: #222; border-bottom: 1px solid #333;">
-                        <span>Ordine #${ordine.id_ordine}</span>
+                        <span class="fw-bold">Ordine #${ordine.id_ordine}</span>
                         <span style="color: #aaaaaa;">${new Date(ordine.data).toLocaleDateString('it-IT')}</span>
                     </div>
+                    
                     <div class="card-body">
                         ${prodottiHTML}
                         <hr class="border-secondary">
                         <div class="text-end">
-                            <h5 style="color: #d90429;">Totale: €${ordine.totale}</h5>
+                            <!-- FIX: Totale in rosso acceso -->
+                            <h5 class="fw-bold" style="color: #d90429;">Totale: €${ordine.totale}</h5>
                         </div>
                     </div>
                 </div>`;
         });
     } catch (e) {
-        document.getElementById('lista-ordini').innerHTML = '<div class="alert alert-danger">Errore nel caricamento ordini.</div>';
+        document.getElementById('lista-ordini').innerHTML = '<div class="alert alert-danger bg-dark text-danger border-danger">Errore nel caricamento ordini.</div>';
     }
 }
 

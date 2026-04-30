@@ -39,22 +39,31 @@ try {
     $stmt_ordine = $pdo->prepare($sql_ordine);
     $stmt_ordine->execute([$id_utente, $totale_euro]);
     
-    // Recuperiamo l'ID dell'ordine appena creato! Ci serve per i dettagli
     $id_ordine_appena_creato = $pdo->lastInsertId();
 
-    // 5. Inseriamo ogni prodotto nella tabella 'dettagli_ordine'
+    // Prepariamo le due query che ci serviranno per ogni prodotto
     $sql_dettaglio = "INSERT INTO dettagli_ordine (id_ordine, id_prodotto, quantita, prezzo_acquisto) VALUES (?, ?, ?, ?)";
     $stmt_dettaglio = $pdo->prepare($sql_dettaglio);
 
+    // ECCO LA MAGIA: La query per togliere i pezzi dal magazzino
+    $sql_magazzino = "UPDATE prodotti SET giacenza = giacenza - ? WHERE id_prodotto = ?";
+    $stmt_magazzino = $pdo->prepare($sql_magazzino);
+
+    // 5. Cicliamo il carrello
     foreach ($carrello as $item) {
+        // A. Salviamo lo scontrino
         $stmt_dettaglio->execute([
             $id_ordine_appena_creato,
             $item['id_prodotto'],
             $item['quantita'],
-            $item['prezzo'] // Salviamo il prezzo di OGGI, così se tra 1 anno la chitarra costa di più, lo storico è salvo!
+            $item['prezzo']
         ]);
         
-        // Bonus da pro: potresti anche fare un UPDATE sulla tabella prodotti per scalare la 'giacenza' qui!
+        // B. SCALIAMO LA GIACENZA VERA DAL DATABASE!
+        $stmt_magazzino->execute([
+            $item['quantita'],
+            $item['id_prodotto']
+        ]);
     }
 
     // 6. Confermiamo la transazione! Salviamo tutto definitivamente.

@@ -27,68 +27,7 @@
         </div>
     </div>
 
-    <script>
-        async function controllaSessione() {
-            const risp = await fetch('../api/me.php');
-            const utente = await risp.json();
-            if (!utente.loggato) window.location.href = 'login.html';
-            
-            document.getElementById('menu-utente').innerHTML = `
-                <span class="navbar-text text-white me-3">Ciao, <b>${utente.nome}</b>!</span>
-                <a href="carrello.html" class="btn btn-warning me-2">🛒 Carrello</a>
-                <button onclick="eseguiLogout()" class="btn btn-danger">Esci</button>
-            `;
-        }
-
-        async function eseguiLogout() {
-            await fetch('../api/logout.php');
-            window.location.href = 'index.html';
-        }
-
-        async function caricaOrdini() {
-            try {
-                const risp = await fetch('../api/ordini.php');
-                const ordini = await risp.json();
-                const contenitore = document.getElementById('lista-ordini');
-
-                if (ordini.length === 0) {
-                    contenitore.innerHTML = '<div class="alert alert-info">Non hai ancora effettuato ordini. Che aspetti a comprare una chitarra?</div>';
-                    return;
-                }
-
-                contenitore.innerHTML = '';
-                ordini.forEach(ordine => {
-                    let prodottiHTML = '';
-                    ordine.prodotti.forEach(p => {
-                        prodottiHTML += `
-                            <div class="d-flex align-items-center mb-2">
-                                <img src="${p.immagine}" width="40" class="me-2 rounded">
-                                <span>${p.nome} (x${p.quantita}) - <b>€${p.prezzo}</b></span>
-                            </div>`;
-                    });
-
-                    contenitore.innerHTML += `
-                        <div class="card mb-4 shadow-sm">
-                            <div class="card-header d-flex justify-content-between bg-white fw-bold">
-                                <span>Ordine #${ordine.id_ordine}</span>
-                                <span class="text-muted">${new Date(ordine.data).toLocaleDateString('it-IT')}</span>
-                            </div>
-                            <div class="card-body">
-                                ${prodottiHTML}
-                                <hr>
-                                <div class="text-end">
-                                    <h5 class="text-primary">Totale: €${ordine.totale}</h5>
-                                </div>
-                            </div>
-                        </div>`;
-                });
-            } catch (e) {
-                document.getElementById('lista-ordini').innerHTML = 'Errore nel caricamento ordini.';
-            }
-        }
-
-        controllaSessione();
-        caricaOrdini();
-    </script>
+    <script src="javascript/app.js"></script>
+</body>
 </body>
 </html>

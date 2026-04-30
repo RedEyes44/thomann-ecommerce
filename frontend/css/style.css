@@ -51,11 +51,12 @@ body {
     box-shadow: 0 15px 30px rgba(0,0,0,0.8) !important;
 }
 .card-img-top {
-    background-color: #2a2a2a; /* Sfondo scuro dietro la foto dello strumento */
+    /* Il magico gradiente: parte da un rosso scuro al centro in basso, sfumando nel nero ai bordi */
+    background: radial-gradient(circle at 50% 100%, #6b0515 0%, #1c1c1c 55%, #0f0f0f 100%);
     padding: 30px;
     height: 300px;
     object-fit: contain;
-    border-bottom: 1px solid #333;
+    border-bottom: 2px solid #d90429; /* Linea di stacco rossa aggressiva */
 }
 .card-title a {
     color: #fff !important;

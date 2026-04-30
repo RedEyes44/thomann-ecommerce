@@ -34,11 +34,29 @@ if ($method === 'POST') {
     $id_prodotto = $dati['id_prodotto'];
 
     try {
-        $stmt = $pdo->prepare("SELECT id_prodotto, nome, prezzo, immagine_url FROM prodotti WHERE id_prodotto = ?");
+        // FIX: Abbiamo aggiunto 'giacenza' nella SELECT!
+        $stmt = $pdo->prepare("SELECT id_prodotto, nome, prezzo, immagine_url, giacenza FROM prodotti WHERE id_prodotto = ?");
         $stmt->execute([$id_prodotto]);
         $prodotto = $stmt->fetch();
 
         if ($prodotto) {
+            // 1. Calcoliamo quanti ne ha GIA' nel carrello di questo specifico prodotto
+            $quantita_attuale_in_carrello = 0;
+            foreach ($_SESSION['carrello'] as $item) {
+                if ($item['id_prodotto'] == $id_prodotto) {
+                    $quantita_attuale_in_carrello = $item['quantita'];
+                    break;
+                }
+            }
+
+            // 2. CONTROLLO MAGICO: Se aggiungendone 1 supero la giacenza, blocco tutto!
+            if ($quantita_attuale_in_carrello + 1 > $prodotto['giacenza']) {
+                http_response_code(400);
+                echo json_encode(['errore' => 'Hai raggiunto la quantità massima disponibile in magazzino per questo articolo.']);
+                exit;
+            }
+
+            // 3. Se c'è spazio, procediamo con l'aggiunta
             $trovato = false;
             foreach ($_SESSION['carrello'] as &$item) {
                 if ($item['id_prodotto'] == $id_prodotto) {
@@ -74,7 +92,7 @@ if ($method === 'POST') {
         echo json_encode(['errore' => 'Errore del server.']);
         exit;
     }
-} 
+}
 // ==========================================
 // SEZIONE GET: VEDIAMO COSA C'È NEL CARRELLO
 // ==========================================
