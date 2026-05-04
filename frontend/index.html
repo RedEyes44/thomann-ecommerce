@@ -31,12 +31,18 @@
         <!-- NUOVA BARRA DI RICERCA AVANZATA -->
         <!-- ============================== -->
         <div class="row justify-content-center mb-4">
-            <div class="col-md-8">
+            <!-- FIX: Aggiunto position-relative qui -->
+            <div class="col-md-8 position-relative"> 
                 <div class="input-group input-group-lg shadow-sm">
                     <span class="input-group-text bg-dark text-white border-secondary">🔍</span>
-                    <input type="text" id="barra-ricerca" class="form-control bg-dark text-white border-secondary" placeholder="Cerca chitarre, bassi, amplificatori..." style="color: white !important;">
+                    <!-- FIX: Aggiunto autocomplete="off" -->
+                    <input type="text" id="barra-ricerca" class="form-control bg-dark text-white border-secondary" placeholder="Cerca chitarre, bassi, amplificatori..." style="color: white !important;" autocomplete="off">
                     <button class="btn btn-danger fw-bold px-4" onclick="eseguiRicerca()">CERCA</button>
                 </div>
+                
+                <!-- NUOVO: La tendina dei suggerimenti (inizialmente nascosta con d-none) -->
+                <ul id="suggerimenti-ricerca" class="list-group position-absolute w-100 shadow-lg d-none" style="z-index: 1000; top: 100%; border: 1px solid #333;">
+                </ul>
             </div>
         </div>
 

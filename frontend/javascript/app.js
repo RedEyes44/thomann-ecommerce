@@ -9,9 +9,16 @@ async function controllaSessione(richiedeLogin = false) {
         const menu = document.getElementById('menu-utente');
 
         if (utente.loggato) {
+            // Se è admin, prepariamo il bottone speciale
+            let adminButton = '';
+            if (utente.ruolo === 'admin') {
+                adminButton = `<a href="admin_ordini.html" class="btn btn-danger me-3 fw-bold">⚙️ ADMIN</a>`;
+            }
+
             if (menu) {
                 menu.innerHTML = `
                     <span class="navbar-text text-white me-3">Ciao, <b>${utente.nome}</b>!</span>
+                    ${adminButton}
                     <a href="ordini.html" class="btn btn-outline-info me-2">I miei Ordini</a>
                     <a href="carrello.html" class="btn btn-warning me-2">🛒 CARRELLO</a>
                     <button onclick="eseguiLogout()" class="btn btn-outline-danger">ESCI</button>
@@ -144,13 +151,75 @@ function eseguiRicerca() {
     caricaCatalogo(null, testo);
 }
 
-// Extra per i PRO: far partire la ricerca quando premi "Invio" sulla tastiera!
+// ==========================================
+// GESTIONE BARRA DI RICERCA E AUTOCOMPLETE
+// ==========================================
 document.addEventListener('DOMContentLoaded', () => {
     const inputRicerca = document.getElementById('barra-ricerca');
-    if (inputRicerca) {
+    const boxSuggerimenti = document.getElementById('suggerimenti-ricerca');
+
+    if (inputRicerca && boxSuggerimenti) {
+        
+        // 1. Cerca quando premi Invio
         inputRicerca.addEventListener('keypress', function (e) {
             if (e.key === 'Enter') {
+                boxSuggerimenti.classList.add('d-none'); // Nascondi tendina
                 eseguiRicerca();
+            }
+        });
+
+        // 2. AUTOCOMPLETE: AJAX mentre digiti
+        inputRicerca.addEventListener('input', async function () {
+            const testo = this.value.trim();
+            
+            // Se hai scritto meno di 2 lettere, nascondiamo la tendina per non intasare il server
+            if (testo.length < 2) {
+                boxSuggerimenti.classList.add('d-none');
+                return;
+            }
+
+            try {
+                // Chiamata AJAX silenziosa al nostro PHP
+                const risposta = await fetch(`../api/prodotti.php?search=${encodeURIComponent(testo)}`);
+                const prodotti = await risposta.json();
+
+                boxSuggerimenti.innerHTML = ''; // Svuoto i vecchi risultati
+
+                if (prodotti.length > 0) {
+                    prodotti.forEach(prodotto => {
+                        const li = document.createElement('li');
+                        li.className = 'list-group-item list-group-item-action d-flex align-items-center';
+                        
+                        // Oltre al nome, ci mettiamo anche una miniatura dello strumento! Effetto super premium.
+                        li.innerHTML = `
+                            <img src="${prodotto.immagine_url}" style="width: 40px; height: 40px; object-fit: contain; margin-right: 15px; background-color: #fff; border-radius: 4px; padding: 2px;">
+                            <span>${prodotto.nome}</span>
+                        `;
+
+                        // Cosa succede se clicco su un suggerimento?
+                        li.addEventListener('click', () => {
+                            inputRicerca.value = prodotto.nome; // Inserisco il nome nella barra
+                            boxSuggerimenti.classList.add('d-none'); // Chiudo la tendina
+                            eseguiRicerca(); // Filtro le card sotto
+                        });
+
+                        boxSuggerimenti.appendChild(li);
+                    });
+                    boxSuggerimenti.classList.remove('d-none'); // Mostro la tendina
+                } else {
+                    // Se non trova niente
+                    boxSuggerimenti.innerHTML = '<li class="list-group-item text-muted">Nessuno strumento trovato...</li>';
+                    boxSuggerimenti.classList.remove('d-none');
+                }
+            } catch (e) {
+                console.error("Errore durante l'autocomplete", e);
+            }
+        });
+
+        // 3. Nascondi la tendina se l'utente clicca fuori dalla barra
+        document.addEventListener('click', function(e) {
+            if (!inputRicerca.contains(e.target) && !boxSuggerimenti.contains(e.target)) {
+                boxSuggerimenti.classList.add('d-none');
             }
         });
     }

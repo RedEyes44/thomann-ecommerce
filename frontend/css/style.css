@@ -107,3 +107,17 @@ body {
     background-color: #333 !important;
     border-color: #fff !important;
 }
+
+/* ================= TENDINA AUTOCOMPLETE ================= */
+#suggerimenti-ricerca .list-group-item {
+    background-color: #1c1c1c;
+    color: #fff;
+    border-color: #333;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+#suggerimenti-ricerca .list-group-item:hover {
+    background-color: #d90429; /* Diventa rosso al passaggio del mouse */
+    color: #fff;
+}
