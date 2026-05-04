@@ -421,7 +421,15 @@ async function eseguiCheckout() {
 async function caricaOrdini() {
     try {
         const risp = await fetch('../api/ordini.php');
-        const ordini = await risp.json();
+       // Controlliamo che la risposta sia un JSON valido prima di decodificarlo!
+       const textResponse = await risposta.text();
+       let ordini = [];
+       try {
+           ordini = JSON.parse(textResponse);
+       } catch (parseError) {
+           console.error("Il server non ha restituito JSON:", textResponse);
+           throw new Error("Il server ha restituito un errore fatale o HTML.");
+       }
         const contenitore = document.getElementById('lista-ordini');
 
         if (ordini.length === 0) {
@@ -544,6 +552,177 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 const risultato = await risposta.json();
 
+                if (risposta.ok) {
+                    box.innerHTML = `<div class="alert alert-success bg-dark border-success text-success">${risultato.messaggio} Ti stiamo portando al Login...</div>`;
+                    setTimeout(() => { window.location.href = 'login.html'; }, 1500);
+                } else {
+                    box.innerHTML = `<div class="alert alert-danger bg-dark border-danger text-danger">${risultato.errore}</div>`;
+                }
+            } catch (err) {
+                box.innerHTML = `<div class="alert alert-danger">Errore di rete.</div>`;
+            }
+        });
+    }
+});
+
+// ==========================================
+// 5. FUNZIONI PANNELLO ADMIN (NUOVE!)
+// ==========================================
+async function caricaTuttiOrdini() {
+    try {
+        const risposta = await fetch('../api/admin_ordini.php');
+        
+        if (risposta.status === 401 || risposta.status === 403) {
+            alert("⚠️ Area riservata agli Amministratori.");
+            window.location.href = 'index.html';
+            return;
+        }
+
+        const ordini = await risposta.json();
+        const contenitore = document.getElementById('tabella-ordini');
+
+        if (ordini.length === 0) {
+            contenitore.innerHTML = '<tr><td colspan="7" class="text-center text-muted">Nessun ordine presente nel database.</td></tr>';
+            return;
+        }
+
+        contenitore.innerHTML = '';
+        
+        ordini.forEach(ordine => {
+            // Assicurati che qui ci sia data_ordine!
+            const dataFormattata = new Date(ordine.data_ordine).toLocaleString('it-IT');
+            let coloreStato = 'bg-secondary';
+            if(ordine.stato === 'confermato') coloreStato = 'bg-primary';
+            if(ordine.stato === 'spedito') coloreStato = 'bg-warning text-dark';
+            if(ordine.stato === 'consegnato') coloreStato = 'bg-success';
+
+            contenitore.innerHTML += `
+                <tr>
+                    <td class="fw-bold">#${ordine.id_ordine}</td>
+                    <td><small style="color: #aaaaaa;">${dataFormattata}</small></td>
+                    <td>
+                        <div class="fw-bold">${ordine.nome} ${ordine.cognome || ''}</div>
+                        <small style="color: #aaaaaa;">${ordine.email}</small>
+                    </td>
+                    <td><small>${ordine.indirizzo_spedizione || 'Non specificato'}</small></td>
+                    <td class="fw-bold" style="color: #d90429;">€${ordine.totale_euro}</td>
+                    <td>
+                        <select class="form-select form-select-sm bg-dark text-white border-secondary select-stato" id="stato-${ordine.id_ordine}">
+                            <option value="in attesa" ${ordine.stato === 'in attesa' ? 'selected' : ''}>In attesa</option>
+                            <option value="confermato" ${ordine.stato === 'confermato' ? 'selected' : ''}>Confermato</option>
+                            <option value="spedito" ${ordine.stato === 'spedito' ? 'selected' : ''}>Spedito</option>
+                            <option value="consegnato" ${ordine.stato === 'consegnato' ? 'selected' : ''}>Consegnato</option>
+                        </select>
+                        <span class="badge ${coloreStato} mt-1 w-100">Attuale: ${ordine.stato.toUpperCase()}</span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-danger w-100 fw-bold" onclick="aggiornaStato(${ordine.id_ordine})">AGGIORNA</button>
+                    </td>
+                </tr>
+            `;
+        });
+    } catch (errore) {
+        document.getElementById('tabella-ordini').innerHTML = '<tr><td colspan="7" class="text-center text-danger">Errore di connessione al server.</td></tr>';
+    }
+}
+
+async function aggiornaStato(idOrdine) {
+    const nuovoStato = document.getElementById(`stato-${idOrdine}`).value;
+    try {
+        const risposta = await fetch('../api/admin_ordini.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id_ordine: idOrdine, nuovo_stato: nuovoStato })
+        });
+        const risultato = await risposta.json();
+        if (risposta.ok) {
+            alert("✅ " + risultato.messaggio);
+            caricaTuttiOrdini();
+        } else {
+            alert("Errore: " + risultato.errore);
+        }
+    } catch (e) {
+        alert("Errore di rete durante l'aggiornamento.");
+    }
+}
+
+
+// ==========================================
+// 6. INIZIALIZZATORE (Il cervello del sito)
+// ==========================================
+document.addEventListener('DOMContentLoaded', () => {
+
+    // 1. Pagine protette classiche
+    if (document.getElementById('lista-carrello') || document.getElementById('lista-ordini')) {
+        controllaSessione(true).then(() => {
+            aggiornaContatoreCarrello();
+            if (document.getElementById('lista-carrello')) caricaDatiCarrello();
+            if (document.getElementById('lista-ordini')) caricaOrdini();
+        });
+    } 
+    // 2. PAGINA ADMIN (NUOVO CONTROLLO!)
+    else if (document.getElementById('tabella-ordini')) {
+        controllaSessione(true).then(() => {
+            caricaTuttiOrdini();
+        });
+    }
+    // 3. Pagine pubbliche
+    else if (document.getElementById('catalogo') || document.getElementById('dettaglio-prodotto')) {
+        controllaSessione(false).then(() => {
+            aggiornaContatoreCarrello();
+            if (document.getElementById('catalogo')) caricaCatalogo();
+            if (document.getElementById('dettaglio-prodotto')) caricaDettaglio();
+        });
+    }
+
+    // Auth Form: Login
+    const formLogin = document.getElementById('formLogin');
+    if (formLogin) {
+        formLogin.addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const dati = {
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value
+            };
+            const box = document.getElementById('messaggio-alert');
+            try {
+                const risposta = await fetch('../api/login.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(dati)
+                });
+                const risultato = await risposta.json();
+                if (risposta.ok) {
+                    box.innerHTML = `<div class="alert alert-success bg-dark border-success text-success">${risultato.messaggio}</div>`;
+                    setTimeout(() => { window.location.href = 'index.html'; }, 1000);
+                } else {
+                    box.innerHTML = `<div class="alert alert-danger bg-dark border-danger text-danger">${risultato.errore}</div>`;
+                }
+            } catch (err) {
+                box.innerHTML = `<div class="alert alert-danger">Errore di rete.</div>`;
+            }
+        });
+    }
+
+    // Auth Form: Registrazione
+    const formReg = document.getElementById('formRegistrazione');
+    if (formReg) {
+        formReg.addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const dati = {
+                nome: document.getElementById('nome').value,
+                cognome: document.getElementById('cognome').value,
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value
+            };
+            const box = document.getElementById('messaggio-alert');
+            try {
+                const risposta = await fetch('../api/register.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(dati)
+                });
+                const risultato = await risposta.json();
                 if (risposta.ok) {
                     box.innerHTML = `<div class="alert alert-success bg-dark border-success text-success">${risultato.messaggio} Ti stiamo portando al Login...</div>`;
                     setTimeout(() => { window.location.href = 'login.html'; }, 1500);

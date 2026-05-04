@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Creato il: Apr 30, 2026 alle 11:40
+-- Creato il: Mag 04, 2026 alle 08:59
 -- Versione del server: 10.4.21-MariaDB
 -- Versione PHP: 8.0.10
 
@@ -95,35 +95,36 @@ CREATE TABLE `ordini` (
   `id_utente` int(5) NOT NULL,
   `indirizzo_spedizione` varchar(255) NOT NULL,
   `data_ordine` datetime DEFAULT current_timestamp(),
-  `totale_euro` decimal(10,2) NOT NULL
+  `totale_euro` decimal(10,2) NOT NULL,
+  `stato` varchar(50) NOT NULL DEFAULT 'in attesa'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dump dei dati per la tabella `ordini`
 --
 
-INSERT INTO `ordini` (`id_ordine`, `id_utente`, `indirizzo_spedizione`, `data_ordine`, `totale_euro`) VALUES
-(1, 1, '', '2026-04-20 08:55:50', '3200.00'),
-(2, 2, '', '2026-04-23 11:02:37', '2499.99'),
-(3, 2, '', '2026-04-23 11:14:49', '2499.99'),
-(4, 1, '', '2026-04-30 10:13:03', '3200.00'),
-(5, 1, '', '2026-04-30 10:22:07', '345.00'),
-(6, 1, '', '2026-04-30 10:49:14', '685.00'),
-(7, 1, '', '2026-04-30 10:49:56', '750.00'),
-(8, 1, '', '2026-04-30 10:53:20', '2499.99'),
-(9, 1, '', '2026-04-30 10:53:31', '7499.97'),
-(10, 1, '', '2026-04-30 10:55:54', '1500.00'),
-(11, 1, '', '2026-04-30 10:56:05', '750.00'),
-(12, 1, '', '2026-04-30 10:56:27', '5250.00'),
-(13, 1, '', '2026-04-30 10:56:37', '1500.00'),
-(14, 1, '', '2026-04-30 10:57:09', '8250.00'),
-(15, 1, '', '2026-04-30 10:57:22', '29250.00'),
-(16, 1, '', '2026-04-30 11:03:53', '1299.00'),
-(17, 1, '', '2026-04-30 11:20:12', '2499.99'),
-(18, 3, '', '2026-04-30 11:21:09', '139.00'),
-(19, 1, '', '2026-04-30 11:23:17', '750.00'),
-(20, 1, '', '2026-04-30 11:26:15', '6400.00'),
-(21, 1, 'sdlkjsdsdefg', '2026-04-30 11:36:27', '2499.99');
+INSERT INTO `ordini` (`id_ordine`, `id_utente`, `indirizzo_spedizione`, `data_ordine`, `totale_euro`, `stato`) VALUES
+(1, 1, '', '2026-04-20 08:55:50', '3200.00', 'in attesa'),
+(2, 2, '', '2026-04-23 11:02:37', '2499.99', 'in attesa'),
+(3, 2, '', '2026-04-23 11:14:49', '2499.99', 'in attesa'),
+(4, 1, '', '2026-04-30 10:13:03', '3200.00', 'in attesa'),
+(5, 1, '', '2026-04-30 10:22:07', '345.00', 'in attesa'),
+(6, 1, '', '2026-04-30 10:49:14', '685.00', 'in attesa'),
+(7, 1, '', '2026-04-30 10:49:56', '750.00', 'in attesa'),
+(8, 1, '', '2026-04-30 10:53:20', '2499.99', 'in attesa'),
+(9, 1, '', '2026-04-30 10:53:31', '7499.97', 'in attesa'),
+(10, 1, '', '2026-04-30 10:55:54', '1500.00', 'in attesa'),
+(11, 1, '', '2026-04-30 10:56:05', '750.00', 'in attesa'),
+(12, 1, '', '2026-04-30 10:56:27', '5250.00', 'in attesa'),
+(13, 1, '', '2026-04-30 10:56:37', '1500.00', 'in attesa'),
+(14, 1, '', '2026-04-30 10:57:09', '8250.00', 'in attesa'),
+(15, 1, '', '2026-04-30 10:57:22', '29250.00', 'in attesa'),
+(16, 1, '', '2026-04-30 11:03:53', '1299.00', 'in attesa'),
+(17, 1, '', '2026-04-30 11:20:12', '2499.99', 'in attesa'),
+(18, 3, '', '2026-04-30 11:21:09', '139.00', 'in attesa'),
+(19, 1, '', '2026-04-30 11:23:17', '750.00', 'in attesa'),
+(20, 1, '', '2026-04-30 11:26:15', '6400.00', 'confermato'),
+(21, 1, 'sdlkjsdsdefg', '2026-04-30 11:36:27', '2499.99', 'confermato');
 
 -- --------------------------------------------------------
 
@@ -167,17 +168,18 @@ CREATE TABLE `utenti` (
   `cognome` varchar(50) NOT NULL,
   `email` varchar(100) NOT NULL,
   `password` varchar(255) NOT NULL,
-  `data_registrazione` date DEFAULT NULL
+  `data_registrazione` date DEFAULT NULL,
+  `ruolo` varchar(20) NOT NULL DEFAULT 'user'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dump dei dati per la tabella `utenti`
 --
 
-INSERT INTO `utenti` (`id_utente`, `nome`, `cognome`, `email`, `password`, `data_registrazione`) VALUES
-(1, 'Riccardo', 'Tonetto', 'riccardotonetto06@gmail.com', '$2y$10$R5zihRx8Wulc19mMMWIam.j/CHvPcQ8SC5k2l4DiXvzkWhbEiIr/C', '2026-04-20'),
-(2, 'Matteo', 'Uvaldi', 'ciccio@gmail.com', '$2y$10$PTidxcunRoWYX0uxKCaH6.hFFdebj3zpJN6REttMVtjtrRl3Vdldu', '2026-04-23'),
-(3, 'Pippo', 'Baudo', 'milos@gmail.com', '$2y$10$zQEBD8bMCDSC3JND5MYgwe8TRw232z3ywSIiNz5VvjQl0LH0.NV4u', '2026-04-30');
+INSERT INTO `utenti` (`id_utente`, `nome`, `cognome`, `email`, `password`, `data_registrazione`, `ruolo`) VALUES
+(1, 'Riccardo', 'Tonetto', 'riccardotonetto06@gmail.com', '$2y$10$R5zihRx8Wulc19mMMWIam.j/CHvPcQ8SC5k2l4DiXvzkWhbEiIr/C', '2026-04-20', 'admin'),
+(2, 'Matteo', 'Uvaldi', 'ciccio@gmail.com', '$2y$10$PTidxcunRoWYX0uxKCaH6.hFFdebj3zpJN6REttMVtjtrRl3Vdldu', '2026-04-23', 'user'),
+(3, 'Pippo', 'Baudo', 'milos@gmail.com', '$2y$10$zQEBD8bMCDSC3JND5MYgwe8TRw232z3ywSIiNz5VvjQl0LH0.NV4u', '2026-04-30', 'user');
 
 --
 -- Indici per le tabelle scaricate
