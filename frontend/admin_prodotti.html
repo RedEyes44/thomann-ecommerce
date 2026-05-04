@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Gestione Prodotti</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/style.css" rel="stylesheet">
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top border-bottom border-danger">
+        <div class="container-fluid">
+            <a class="navbar-brand text-danger fw-bold" href="index.html">🎸 TH-GUITARS | PANNELLO ADMIN</a>
+            <div class="d-flex align-items-center">
+                <a href="admin_ordini.html" class="btn btn-sm btn-outline-light me-2">Gestione Ordini</a>
+                <a href="admin_prodotti.html" class="btn btn-sm btn-danger me-4">Gestione Prodotti</a>
+                <div id="menu-utente"></div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-5 mb-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="text-white">Inventario Prodotti 🎸</h2>
+            <button class="btn btn-success fw-bold px-4" onclick="apriFormProdotto()">+ NUOVO PRODOTTO</button>
+        </div>
+
+        <!-- FORM NASCOSTO PER AGGIUNGERE/MODIFICARE -->
+        <div id="box-form-prodotto" class="card bg-dark border-secondary mb-4 d-none shadow-lg">
+            <div class="card-header bg-secondary text-white fw-bold" id="titolo-form">Aggiungi Prodotto</div>
+            <div class="card-body text-light">
+                <form id="formProdotto">
+                    <input type="hidden" id="id_prodotto">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label>Nome Prodotto *</label>
+                            <input type="text" id="nome_prodotto" class="form-control bg-dark text-white border-secondary" required>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label>Categoria *</label>
+                            <select id="categoria_prodotto" class="form-select bg-dark text-white border-secondary" required>
+                                <option value="1">Chitarre Elettriche</option>
+                                <option value="2">Bassi Elettrici</option>
+                                <option value="3">Chitarre Acustiche</option>
+                                <option value="4">Amplificatori</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label>Prezzo (€) *</label>
+                            <input type="number" step="0.01" id="prezzo_prodotto" class="form-control bg-dark text-white border-secondary" required>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label>Giacenza *</label>
+                            <input type="number" id="giacenza_prodotto" class="form-control bg-dark text-white border-secondary" required>
+                        </div>
+                        <div class="col-md-9 mb-3">
+                            <label>URL Immagine (es. img/stratocaster.png)</label>
+                            <input type="text" id="immagine_prodotto" class="form-control bg-dark text-white border-secondary">
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label>Descrizione</label>
+                            <textarea id="descrizione_prodotto" class="form-control bg-dark text-white border-secondary" rows="2"></textarea>
+                        </div>
+                    </div>
+                    <div class="text-end mt-2">
+                        <button type="button" class="btn btn-outline-light me-2" onclick="chiudiFormProdotto()">Annulla</button>
+                        <button type="submit" class="btn btn-danger fw-bold">SALVA PRODOTTO</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- TABELLA PRODOTTI -->
+        <div class="table-responsive bg-dark p-3 rounded border border-secondary shadow-lg">
+            <table class="table table-dark table-hover align-middle">
+                <thead>
+                    <tr class="text-danger">
+                        <th>Img</th>
+                        <th>Nome</th>
+                        <th>Categoria</th>
+                        <th>Prezzo</th>
+                        <th>Giacenza</th>
+                        <th class="text-end">Azioni</th>
+                    </tr>
+                </thead>
+                <tbody id="tabella-prodotti">
+                    <tr><td colspan="6" class="text-center">Caricamento inventario in corso...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- NOTA BENE IL NOME DELLA CARTELLA -->
+    <script src="javascript/app.js"></script>
+</body>
+</html>

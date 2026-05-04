@@ -9,11 +9,19 @@
 </head>
 <body>
 
-    <!-- Navbar con Badge rosso per ricordare che siamo in Admin Mode -->
+   <!-- Navbar con menu di navigazione Admin -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top border-bottom border-danger">
         <div class="container-fluid">
             <a class="navbar-brand text-danger fw-bold" href="index.html">🎸 TH-GUITARS | PANNELLO ADMIN</a>
-            <div class="d-flex" id="menu-utente"></div>
+            
+            <div class="d-flex align-items-center">
+                <!-- Bottone ROSSO perché siamo nella pagina Ordini -->
+                <a href="admin_ordini.html" class="btn btn-sm btn-danger me-2 fw-bold">Gestione Ordini</a>
+                <!-- Bottone TRASPARENTE per andare ai Prodotti -->
+                <a href="admin_prodotti.html" class="btn btn-sm btn-outline-light me-4">Gestione Prodotti</a>
+                
+                <div id="menu-utente"></div>
+            </div>
         </div>
     </nav>
 

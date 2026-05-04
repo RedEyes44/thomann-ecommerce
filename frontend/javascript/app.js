@@ -646,9 +646,136 @@ async function aggiornaStato(idOrdine) {
     }
 }
 
+// ==========================================
+// 6. FUNZIONI PANNELLO ADMIN - PRODOTTI
+// ==========================================
+async function caricaAdminProdotti() {
+    try {
+        const risposta = await fetch('../api/admin_prodotti.php');
+        if (risposta.status === 401 || risposta.status === 403) {
+            window.location.href = 'index.html'; return;
+        }
+
+        const prodotti = await risposta.json();
+        const contenitore = document.getElementById('tabella-prodotti');
+        contenitore.innerHTML = '';
+
+        prodotti.forEach(p => {
+            // Colore rosso se la giacenza è zero
+            const giacenzaStyle = p.giacenza <= 0 ? 'color: #d90429; font-weight: bold;' : '';
+            
+            // Creiamo un oggetto JSON sicuro da passare al bottone "Modifica"
+            const jsonProdotto = JSON.stringify(p).replace(/'/g, "&apos;").replace(/"/g, "&quot;");
+
+            contenitore.innerHTML += `
+                <tr>
+                    <td><img src="${p.immagine_url}" width="40" class="rounded bg-white p-1"></td>
+                    <td class="fw-bold">${p.nome}</td>
+                    <td><span class="badge bg-secondary">${p.nome_categoria}</span></td>
+                    <td>€ ${p.prezzo}</td>
+                    <td style="${giacenzaStyle}">${p.giacenza} pz.</td>
+                    <td class="text-end">
+                        <button class="btn btn-sm btn-outline-info me-1" onclick="apriFormProdotto(${jsonProdotto})">✏️</button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="eliminaProdotto(${p.id_prodotto})">🗑️</button>
+                    </td>
+                </tr>
+            `;
+        });
+    } catch (e) {
+        document.getElementById('tabella-prodotti').innerHTML = '<tr><td colspan="6" class="text-center text-danger">Errore di connessione al server.</td></tr>';
+    }
+}
+
+// Mostra e nasconde il form
+function apriFormProdotto(prodotto = null) {
+    document.getElementById('box-form-prodotto').classList.remove('d-none');
+    const form = document.getElementById('formProdotto');
+    
+    if (prodotto) {
+        // MODIFICA: Riempiamo i campi con i dati esistenti
+        document.getElementById('titolo-form').innerText = "Modifica Prodotto";
+        document.getElementById('id_prodotto').value = prodotto.id_prodotto;
+        document.getElementById('nome_prodotto').value = prodotto.nome;
+        document.getElementById('categoria_prodotto').value = prodotto.categoria;
+        document.getElementById('prezzo_prodotto').value = prodotto.prezzo;
+        document.getElementById('giacenza_prodotto').value = prodotto.giacenza;
+        document.getElementById('immagine_prodotto').value = prodotto.immagine_url;
+        document.getElementById('descrizione_prodotto').value = prodotto.descrizione;
+    } else {
+        // NUOVO: Svuotiamo il form
+        document.getElementById('titolo-form').innerText = "Aggiungi Nuovo Prodotto";
+        form.reset();
+        document.getElementById('id_prodotto').value = '';
+    }
+}
+
+function chiudiFormProdotto() {
+    document.getElementById('box-form-prodotto').classList.add('d-none');
+}
+
+// Salvataggio (Insert o Update)
+document.addEventListener('DOMContentLoaded', () => {
+    const formProd = document.getElementById('formProdotto');
+    if (formProd) {
+        formProd.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const dati = {
+                id_prodotto: document.getElementById('id_prodotto').value,
+                nome: document.getElementById('nome_prodotto').value,
+                categoria: document.getElementById('categoria_prodotto').value,
+                prezzo: document.getElementById('prezzo_prodotto').value,
+                giacenza: document.getElementById('giacenza_prodotto').value,
+                immagine_url: document.getElementById('immagine_prodotto').value,
+                descrizione: document.getElementById('descrizione_prodotto').value
+            };
+
+            try {
+                const risposta = await fetch('../api/admin_prodotti.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(dati)
+                });
+                const risultato = await risposta.json();
+                
+                if (risposta.ok) {
+                    alert("✅ " + risultato.messaggio);
+                    chiudiFormProdotto();
+                    caricaAdminProdotti(); // Ricarica la tabella
+                } else {
+                    alert("Errore: " + risultato.errore);
+                }
+            } catch (err) {
+                alert("Errore di rete durante il salvataggio.");
+            }
+        });
+    }
+});
+
+// Eliminazione
+async function eliminaProdotto(id) {
+    if(!confirm("⚠️ ATTENZIONE: Vuoi davvero eliminare questo prodotto dal catalogo?")) return;
+    
+    try {
+        const risposta = await fetch('../api/admin_prodotti.php', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id_prodotto: id })
+        });
+        const risultato = await risposta.json();
+        
+        if (risposta.ok) {
+            caricaAdminProdotti();
+        } else {
+            alert("❌ " + risultato.errore);
+        }
+    } catch (err) {
+        alert("Errore durante l'eliminazione.");
+    }
+}
 
 // ==========================================
-// 6. INIZIALIZZATORE (Il cervello del sito)
+// 7. INIZIALIZZATORE (Il cervello del sito)
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -672,6 +799,13 @@ document.addEventListener('DOMContentLoaded', () => {
             aggiornaContatoreCarrello();
             if (document.getElementById('catalogo')) caricaCatalogo();
             if (document.getElementById('dettaglio-prodotto')) caricaDettaglio();
+        });
+    }
+
+    // PAGINA ADMIN PRODOTTI
+    else if (document.getElementById('tabella-prodotti')) {
+        controllaSessione(true).then(() => {
+            caricaAdminProdotti();
         });
     }
 
