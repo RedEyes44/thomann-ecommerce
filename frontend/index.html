@@ -28,31 +28,40 @@
     <div class="container mt-5">
         
         <!-- ============================== -->
-        <!-- NUOVA BARRA DI RICERCA AVANZATA -->
+        <!-- PANNELLO RICERCA E ORDINAMENTO -->
         <!-- ============================== -->
         <div class="row justify-content-center mb-4">
-            <!-- FIX: Aggiunto position-relative qui -->
-            <div class="col-md-8 position-relative"> 
+            <!-- Barra di ricerca (Occupa 6 colonne su schermi medi) -->
+            <div class="col-md-6 position-relative mb-3"> 
                 <div class="input-group input-group-lg shadow-sm">
                     <span class="input-group-text bg-dark text-white border-secondary">🔍</span>
-                    <!-- FIX: Aggiunto autocomplete="off" -->
-                    <input type="text" id="barra-ricerca" class="form-control bg-dark text-white border-secondary" placeholder="Cerca chitarre, bassi, amplificatori..." style="color: white !important;" autocomplete="off">
+                    <input type="text" id="barra-ricerca" class="form-control bg-dark text-white border-secondary" placeholder="Cerca nel catalogo..." autocomplete="off">
                     <button class="btn btn-danger fw-bold px-4" onclick="eseguiRicerca()">CERCA</button>
                 </div>
-                
-                <!-- NUOVO: La tendina dei suggerimenti (inizialmente nascosta con d-none) -->
-                <ul id="suggerimenti-ricerca" class="list-group position-absolute w-100 shadow-lg d-none" style="z-index: 1000; top: 100%; border: 1px solid #333;">
-                </ul>
+                <ul id="suggerimenti-ricerca" class="list-group position-absolute w-100 shadow-lg d-none" style="z-index: 1000; top: 100%; border: 1px solid #333;"></ul>
+            </div>
+            
+            <!-- Tendina Ordinamento (Occupa 3 colonne su schermi medi) -->
+            <div class="col-md-3 mb-3">
+                <select id="filtro-ordine" class="form-select form-select-lg bg-dark text-white border-secondary shadow-sm" onchange="eseguiRicerca()">
+                    <option value="nuovi">✨ Ultimi Arrivi</option>
+                    <option value="prezzo_asc">💶 Prezzo: Crescente</option>
+                    <option value="prezzo_desc">💎 Prezzo: Decrescente</option>
+                    <option value="alfabetico">🔤 Nome: A - Z</option>
+                </select>
             </div>
         </div>
 
-        <!-- BARRA DEI FILTRI (Esistente) -->
-        <div class="d-flex justify-content-center mb-5 gap-3 flex-wrap">
-            <button class="btn btn-outline-dark px-4 py-2" onclick="caricaCatalogo()">ALL GEAR</button>
-            <button class="btn btn-outline-dark px-4 py-2" onclick="caricaCatalogo(1)">ELECTRIC GUITARS</button>
-            <button class="btn btn-outline-dark px-4 py-2" onclick="caricaCatalogo(2)">ACOUSTIC GUITARS</button>
-            <button class="btn btn-outline-dark px-4 py-2" onclick="caricaCatalogo(3)">BASSES</button>
-            <button class="btn btn-outline-dark px-4 py-2" onclick="caricaCatalogo(4)">AMPLIFIERS</button>
+        <!-- Bottoni Categoria -->
+        <div class="d-flex justify-content-center gap-2 mb-4 flex-wrap">
+            <!-- Il bottone ALL GEAR ora resetta tutto: ricerca, ordinamento e categoria -->
+            <button class="btn btn-outline-light px-4" onclick="document.getElementById('barra-ricerca').value=''; document.getElementById('filtro-ordine').value='nuovi'; caricaCatalogo(null)">ALL GEAR</button>
+            
+            <!-- Gli altri bottoni passano semplicemente l'ID della loro categoria -->
+            <button class="btn btn-outline-light px-4" onclick="caricaCatalogo(1)">ELECTRIC GUITARS</button>
+            <button class="btn btn-outline-light px-4" onclick="caricaCatalogo(2)">ACOUSTIC GUITARS</button>
+            <button class="btn btn-outline-light px-4" onclick="caricaCatalogo(3)">BASSES</button>
+            <button class="btn btn-outline-light px-4" onclick="caricaCatalogo(4)">AMPLIFIERS</button>
         </div>
 
         <div class="row" id="catalogo">

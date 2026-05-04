@@ -17,8 +17,10 @@ async function controllaSessione(richiedeLogin = false) {
 
             if (menu) {
                 menu.innerHTML = `
-                    <span class="navbar-text text-white me-3">Ciao, <b>${utente.nome}</b>!</span>
-                    ${adminButton}
+                    
+                    <a href="profilo.html" class="navbar-text text-white me-3 text-decoration-none" style="cursor:pointer; transition: 0.2s;">
+                        👤 Ciao, <b>${utente.nome}</b>!
+                    </a>
                     <a href="ordini.html" class="btn btn-outline-info me-2">I miei Ordini</a>
                     <a href="carrello.html" class="btn btn-warning me-2">🛒 CARRELLO</a>
                     <button onclick="eseguiLogout()" class="btn btn-outline-danger">ESCI</button>
@@ -87,40 +89,51 @@ async function aggiungiAlCarrello(idProdotto, isDettaglio = false) {
 
 
 // ==========================================
-// 2. FUNZIONI CATALOGO E PRODOTTO (index.html e prodotto.html)
+// FUNZIONI CATALOGO E PRODOTTO 
 // ==========================================
 
-// Aggiungiamo 'testoRicerca' come secondo parametro opzionale
-async function caricaCatalogo(idCategoria = null, testoRicerca = null) {
+// Memoria globale: ricorda in che categoria siamo mentre ordiniamo o cerchiamo
+let categoriaAttiva = null; 
+
+async function caricaCatalogo(idCategoria = undefined, testoRicerca = null) {
     try {
-        let urlApi = '../api/prodotti.php?';
-        
-        // Costruiamo l'URL in base a cosa ci chiede l'utente
-        if (idCategoria !== null) {
-            urlApi += `categoria=${idCategoria}&`;
-        }
-        if (testoRicerca !== null && testoRicerca.trim() !== '') {
-            // codifichiamo il testo per evitare che spazi o simboli rompano l'URL
-            urlApi += `search=${encodeURIComponent(testoRicerca)}`; 
+        // 1. GESTIONE STATO CATEGORIA
+        // Se passiamo un ID (es. cliccando un bottone categoria), lo salviamo in memoria.
+        // Se passiamo null (cliccando "Tutti"), puliamo la memoria.
+        // Se non passiamo nulla (undefined), manteniamo quello che c'è in memoria.
+        if (idCategoria !== undefined) {
+            categoriaAttiva = idCategoria;
         }
 
+        // 2. LETTURA INPUT E TENDINA
+        const inputRicerca = document.getElementById('barra-ricerca');
+        const selectOrdine = document.getElementById('filtro-ordine');
+        
+        const testoReale = testoRicerca !== null ? testoRicerca : (inputRicerca ? inputRicerca.value : '');
+        const ordineReale = selectOrdine ? selectOrdine.value : 'nuovi';
+
+        // 3. COSTRUZIONE URL DINAMICO
+        let urlApi = '../api/prodotti.php?';
+        if (categoriaAttiva !== null) urlApi += `categoria=${categoriaAttiva}&`;
+        if (testoReale.trim() !== '') urlApi += `search=${encodeURIComponent(testoReale)}&`;
+        urlApi += `sort=${ordineReale}`;
+
+        // 4. CHIAMATA E RENDER
         const risposta = await fetch(urlApi);
         const prodotti = await risposta.json();
         const contenitore = document.getElementById('catalogo');
         
         if (prodotti.length === 0) {
-            contenitore.innerHTML = '<div class="col-12 text-center text-light mt-5"><h4>🎸 Nessuno strumento trovato. Prova con altri termini!</h4></div>';
+            contenitore.innerHTML = '<div class="col-12 text-center text-light mt-5"><h4>🎸 Nessuno strumento trovato con questi filtri.</h4></div>';
             return;
         }
 
         contenitore.innerHTML = ''; 
-        
         prodotti.forEach(prodotto => {
             contenitore.innerHTML += `
                 <div class="col-md-4 col-sm-6 mb-4">
                     <div class="card h-100 shadow-sm border-secondary" style="background-color: #1c1c1c;">
                         <a href="prodotto.html?id=${prodotto.id_prodotto}">
-                            <!-- Manteniamo l'effetto Ibanez -->
                             <img src="${prodotto.immagine_url}" class="card-img-top" style="background: radial-gradient(circle at 50% 100%, #6b0515 0%, #1c1c1c 55%, #0f0f0f 100%); border-bottom: 2px solid #d90429;" alt="${prodotto.nome}">
                         </a>
                         <div class="card-body d-flex flex-column">
@@ -130,7 +143,6 @@ async function caricaCatalogo(idCategoria = null, testoRicerca = null) {
                                     ${prodotto.nome}
                                 </a>
                             </h5>
-                            <p class="card-text small" style="color: #bbbbbb;">${prodotto.descrizione.substring(0, 60)}...</p>
                             <h4 class="mt-auto fw-bold" style="color: #d90429;">€ ${prodotto.prezzo}</h4>
                             <button class="btn btn-success mt-3 fw-bold" onclick="aggiungiAlCarrello(${prodotto.id_prodotto}, false)">
                                 AGGIUNGI AL CARRELLO
@@ -144,11 +156,10 @@ async function caricaCatalogo(idCategoria = null, testoRicerca = null) {
     }
 }
 
-// Questa funzione viene chiamata quando clicchi il tasto rosso "CERCA"
+// Funzione chiamata dal tasto "Cerca" o quando si cambia la tendina di ordinamento (onchange)
 function eseguiRicerca() {
-    const testo = document.getElementById('barra-ricerca').value;
-    // Passiamo "null" come categoria per cercare in TUTTO il catalogo
-    caricaCatalogo(null, testo);
+    // Passiamo "undefined" così non sovrascrive la categoria attualmente selezionata
+    caricaCatalogo(undefined);
 }
 
 // ==========================================
@@ -345,9 +356,19 @@ async function caricaDatiCarrello() {
             `;
         });
 
+        // ... (dopo il forEach del carrello)
         document.getElementById('totale-articoli').innerText = dati.totale_articoli;
         document.getElementById('totale-euro').innerText = dati.totale_euro;
         document.getElementById('btn-checkout').disabled = false;
+
+        // NOVITÀ: Tiriamo giù l'indirizzo salvato per autocompilare l'input del carrello
+        try {
+            const rispProf = await fetch('../api/profilo.php');
+            const datiProf = await rispProf.json();
+            if(datiProf.indirizzo_spedizione) {
+                document.getElementById('indirizzo-spedizione').value = datiProf.indirizzo_spedizione;
+            }
+        } catch(e) {}
 
     } catch (errore) {
         document.getElementById('lista-carrello').innerHTML = `
@@ -554,6 +575,43 @@ document.addEventListener('DOMContentLoaded', () => {
             } catch (err) {
                 box.innerHTML = `<div class="alert alert-danger">Errore di rete.</div>`;
             }
+        });
+    }
+
+    // PAGINA PROFILO UTENTE
+    const formProfilo = document.getElementById('formProfilo');
+    if (formProfilo) {
+        controllaSessione(true).then(async () => {
+            aggiornaContatoreCarrello();
+            // Carica i dati attuali
+            const risp = await fetch('../api/profilo.php');
+            const dati = await risp.json();
+            document.getElementById('nome-profilo').value = dati.nome + ' ' + (dati.cognome || '');
+            document.getElementById('email-profilo').value = dati.email;
+            document.getElementById('indirizzo-profilo').value = dati.indirizzo_spedizione || '';
+        });
+
+        // Al salvataggio
+        formProfilo.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const payload = {
+                indirizzo: document.getElementById('indirizzo-profilo').value,
+                password: document.getElementById('password-profilo').value
+            };
+            try {
+                const risp = await fetch('../api/profilo.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const ris = await risp.json();
+                if (risp.ok) {
+                    alert("✅ " + ris.messaggio);
+                    document.getElementById('password-profilo').value = ''; // Pulisce la password per sicurezza
+                } else {
+                    alert("Errore: " + ris.errore);
+                }
+            } catch (err) { alert("Errore di rete"); }
         });
     }
 });
