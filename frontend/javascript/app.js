@@ -418,18 +418,16 @@ async function eseguiCheckout() {
 // 4. FUNZIONI ORDINI (ordini.html)
 // ==========================================
 
+// ==========================================
+// FUNZIONI ORDINI UTENTE NORMALE
+// ==========================================
 async function caricaOrdini() {
     try {
         const risp = await fetch('../api/ordini.php');
-       // Controlliamo che la risposta sia un JSON valido prima di decodificarlo!
-       const textResponse = await risposta.text();
-       let ordini = [];
-       try {
-           ordini = JSON.parse(textResponse);
-       } catch (parseError) {
-           console.error("Il server non ha restituito JSON:", textResponse);
-           throw new Error("Il server ha restituito un errore fatale o HTML.");
-       }
+        const ordini = await risp.json();
+        
+        if (ordini.errore) throw new Error(ordini.errore);
+
         const contenitore = document.getElementById('lista-ordini');
 
         if (ordini.length === 0) {
@@ -440,40 +438,35 @@ async function caricaOrdini() {
         contenitore.innerHTML = '';
         ordini.forEach(ordine => {
             let prodottiHTML = '';
-            ordine.prodotti.forEach(p => {
-                prodottiHTML += `
-                    <div class="d-flex align-items-center mb-2">
-                        <img src="${p.immagine}" width="40" class="me-2 rounded border border-dark">
-                        <!-- FIX: Aggiunto text-white per i nomi e rosso per i prezzi -->
-                        <span class="text-white">${p.nome} (x${p.quantita}) - <b style="color: #d90429;">€${p.prezzo}</b></span>
-                    </div>`;
-            });
+            if(ordine.prodotti) {
+                ordine.prodotti.forEach(p => {
+                    prodottiHTML += `
+                        <div class="d-flex align-items-center mb-2">
+                            <img src="${p.immagine}" width="40" class="me-2 rounded border border-dark">
+                            <span class="text-white">${p.nome} (x${p.quantita}) - <b style="color: #d90429;">€${p.prezzo}</b></span>
+                        </div>`;
+                });
+            }
 
             contenitore.innerHTML += `
-                <!-- FIX: Sfondo scuro per tutta la card -->
                 <div class="card mb-4 shadow-sm" style="background-color: #1c1c1c; border-color: #333;">
-                    
-                    <!-- FIX: Header della card grigio scuro, non più bianco! -->
                     <div class="card-header d-flex justify-content-between text-white" style="background-color: #222; border-bottom: 1px solid #333;">
-                        <span class="fw-bold">Ordine #${ordine.id_ordine}</span>
+                        <span class="fw-bold">Ordine #${ordine.id_ordine} - Stato: <span class="text-warning">${ordine.stato.toUpperCase()}</span></span>
                         <span style="color: #aaaaaa;">${new Date(ordine.data).toLocaleDateString('it-IT')}</span>
                     </div>
-                    
                     <div class="card-body">
                         ${prodottiHTML}
                         <hr class="border-secondary">
                         <div class="text-end">
-                            <!-- FIX: Totale in rosso acceso -->
                             <h5 class="fw-bold" style="color: #d90429;">Totale: €${ordine.totale}</h5>
                         </div>
                     </div>
                 </div>`;
         });
     } catch (e) {
-        document.getElementById('lista-ordini').innerHTML = '<div class="alert alert-danger bg-dark text-danger border-danger">Errore nel caricamento ordini.</div>';
+        document.getElementById('lista-ordini').innerHTML = `<div class="alert alert-danger bg-dark text-danger border-danger">Errore fatale: ${e.message}</div>`;
     }
 }
-
 
 // ==========================================
 // 5. INIZIALIZZATORE (Il cervello del sito)
@@ -578,7 +571,16 @@ async function caricaTuttiOrdini() {
             return;
         }
 
-        const ordini = await risposta.json();
+        const textResponse = await risposta.text();
+        let ordini = [];
+        try {
+            ordini = JSON.parse(textResponse);
+        } catch (parseError) {
+            throw new Error("Il server non ha restituito JSON valido. Controlla il DB.");
+        }
+
+        if (ordini.errore) throw new Error(ordini.errore);
+
         const contenitore = document.getElementById('tabella-ordini');
 
         if (ordini.length === 0) {
@@ -587,9 +589,7 @@ async function caricaTuttiOrdini() {
         }
 
         contenitore.innerHTML = '';
-        
         ordini.forEach(ordine => {
-            // Assicurati che qui ci sia data_ordine!
             const dataFormattata = new Date(ordine.data_ordine).toLocaleString('it-IT');
             let coloreStato = 'bg-secondary';
             if(ordine.stato === 'confermato') coloreStato = 'bg-primary';
@@ -622,7 +622,7 @@ async function caricaTuttiOrdini() {
             `;
         });
     } catch (errore) {
-        document.getElementById('tabella-ordini').innerHTML = '<tr><td colspan="7" class="text-center text-danger">Errore di connessione al server.</td></tr>';
+        document.getElementById('tabella-ordini').innerHTML = `<tr><td colspan="7" class="text-center text-danger fw-bold">Errore di connessione: ${errore.message}</td></tr>`;
     }
 }
 
