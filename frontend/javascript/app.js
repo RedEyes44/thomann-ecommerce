@@ -8,19 +8,22 @@ async function controllaSessione(richiedeLogin = false) {
         const utente = await risposta.json();
         const menu = document.getElementById('menu-utente');
 
+        console.log(utente);
+
         if (utente.loggato) {
             // Se è admin, prepariamo il bottone speciale
             let adminButton = '';
-            if (utente.ruolo === 'admin') {
+            if (utente.ruolo == 'admin') {
                 adminButton = `<a href="admin_ordini.html" class="btn btn-danger me-3 fw-bold">⚙️ ADMIN</a>`;
             }
 
             if (menu) {
+                // INTEGRATO QUI IL BOTTONE ADMIN E CHIUSO CORRETTAMENTE IL TAG <b> e <h6>
                 menu.innerHTML = `
-                    
-                    <a href="profilo.html" class="navbar-text text-white me-3 text-decoration-none" style="cursor:pointer; transition: 0.2s;">
-                        👤 Ciao, <b>${utente.nome}</b>!
-                    </a>
+                    ${adminButton}
+                    <h6 class="navbar-text text-white me-3 text-decoration-none" style="cursor:pointer; transition: 0.2s;">
+                        👤 Ciao, <b>${utente.nome}</b>
+                    </h6>
                     <a href="ordini.html" class="btn btn-outline-info me-2">I miei Ordini</a>
                     <a href="carrello.html" class="btn btn-warning me-2">🛒 CARRELLO</a>
                     <button onclick="eseguiLogout()" class="btn btn-outline-danger">ESCI</button>
