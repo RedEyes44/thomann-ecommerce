@@ -54,14 +54,8 @@
 
         <!-- Bottoni Categoria -->
         <div class="d-flex justify-content-center gap-2 mb-4 flex-wrap">
-            <!-- Il bottone ALL GEAR ora resetta tutto: ricerca, ordinamento e categoria -->
-            <button class="btn btn-outline-light px-4" onclick="document.getElementById('barra-ricerca').value=''; document.getElementById('filtro-ordine').value='nuovi'; caricaCatalogo(null)">ALL GEAR</button>
-            
-            <!-- Gli altri bottoni passano semplicemente l'ID della loro categoria -->
-            <button class="btn btn-outline-light px-4" onclick="caricaCatalogo(1)">ELECTRIC GUITARS</button>
-            <button class="btn btn-outline-light px-4" onclick="caricaCatalogo(2)">ACOUSTIC GUITARS</button>
-            <button class="btn btn-outline-light px-4" onclick="caricaCatalogo(3)">BASSES</button>
-            <button class="btn btn-outline-light px-4" onclick="caricaCatalogo(4)">AMPLIFIERS</button>
+            <div id="bottoni-categorie" class="d-flex justify-content-center flex-wrap gap-2 my-4">
+    </div>
         </div>
 
         <div class="row" id="catalogo">

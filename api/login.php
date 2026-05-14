@@ -1,36 +1,41 @@
 <?php
-session_start(); 
+session_start();
 header('Content-Type: application/json');
 require_once 'db.php';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $dati = json_decode(file_get_contents("php://input"), true);
+$dati = json_decode(file_get_contents("php://input"), true);
 
-    if (empty($dati['email']) || empty($dati['password'])) {
-        http_response_code(400);
-        echo json_encode(['errore' => 'Inserisci email e password.']);
-        exit;
+if (!$dati || !isset($dati['email']) || !isset($dati['password'])) {
+    http_response_code(400);
+    echo json_encode(['errore' => 'Inserisci email e password.']);
+    exit;
+}
+
+try {
+    // Cerchiamo l'utente nel DB
+    $stmt = $pdo->prepare("SELECT * FROM utenti WHERE email = ?");
+    $stmt->execute([$dati['email']]);
+    $utente = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    // Verifichiamo la password criptata
+    if ($utente && password_verify($dati['password'], $utente['password'])) {
+        
+        // ECCO LA CORREZIONE: Salviamo l'ID e forziamo il salvataggio del RUOLO in memoria!
+        $_SESSION['id_utente'] = $utente['id_utente']; 
+        $_SESSION['ruolo'] = strtolower(trim($utente['ruolo'])); // Prende il tuo "admin" e lo blinda
+        
+        echo json_encode([
+            'loggato' => true, 
+            'messaggio' => 'Benvenuto ' . $utente['nome'],
+            'ruolo' => $_SESSION['ruolo']
+        ]);
+        
+    } else {
+        http_response_code(401);
+        echo json_encode(['errore' => 'Credenziali errate. Riprova.']);
     }
-
-    try {
-        $stmt = $pdo->prepare("SELECT * FROM utenti WHERE email = ?");
-        $stmt->execute([$dati['email']]);
-        $utente = $stmt->fetch();
-
-        if ($utente && password_verify($dati['password'], $utente['password'])) {
-            $_SESSION['id_utente'] = $utente['id_utente'];
-            $_SESSION['nome'] = $utente['nome'];
-            $_SESSION['email'] = $utente['email'];
-
-            http_response_code(200);
-            echo json_encode(['messaggio' => 'Login effettuato!', 'nome' => $utente['nome']]);
-        } else {
-            http_response_code(401);
-            echo json_encode(['errore' => 'Email o password errati.']);
-        }
-    } catch (PDOException $e) {
-        http_response_code(500);
-        echo json_encode(['errore' => 'Errore interno del server.']);
-    }
+} catch (PDOException $e) {
+    http_response_code(500);
+    echo json_encode(['errore' => 'Errore di connessione al database.']);
 }
 ?>

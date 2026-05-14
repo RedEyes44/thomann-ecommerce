@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8"><title>Gestione Categorie</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/style.css" rel="stylesheet">
+</head>
+<body class="bg-dark text-white">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top border-bottom border-danger">
+        <div class="container-fluid">
+            <a class="navbar-brand text-danger fw-bold" href="index.html">🎸 TH-GUITARS | PANNELLO ADMIN</a>
+            <div class="d-flex align-items-center">
+                <a href="admin_ordini.html" class="btn btn-sm btn-danger me-2 fw-bold">Gestione Ordini</a>
+                <a href="admin_prodotti.html" class="btn btn-sm btn-outline-light me-2">Gestione Prodotti</a>
+                <a href="admin_categorie.html" class="btn btn-sm btn-outline-light me-4">Gestione Categorie</a>
+                
+                <div id="menu-utente"></div>
+            </div>
+        </div>
+    </nav>
+    <div class="container mt-5">
+        <h2 class="mb-4 fw-bold">Gestione Categorie 🏷️</h2>
+
+
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card bg-black border-secondary p-4">
+                    <form onsubmit="aggiungiCategoria(event)">
+                        <label class="mb-2 text-light fw-bold">Nome Categoria</label>
+                        <input type="text" id="nome_categoria" class="form-control bg-dark text-white border-secondary mb-3" required>
+                        
+                        <label class="mb-2 text-light fw-bold">Descrizione</label>
+                        <textarea id="desc_categoria" class="form-control bg-dark text-white border-secondary mb-3" rows="3"></textarea>
+                        
+                        <button type="submit" class="btn btn-warning w-100 fw-bold text-dark mt-2">SALVA CATEGORIA</button>
+                    </form>
+                </div>
+            </div>
+            <div class="col-md-8">
+                <table class="table table-dark table-striped align-middle border-secondary">
+                    <thead><tr><th>ID</th><th>Nome Categoria</th><th>Azioni</th></tr></thead>
+                    <tbody id="tabella-categorie"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <script src="javascript/app.js"></script>
+</body>
+</html>

@@ -8,33 +8,45 @@ async function controllaSessione(richiedeLogin = false) {
         const utente = await risposta.json();
         const menu = document.getElementById('menu-utente');
 
-        console.log(utente);
+        // Salviamo il ruolo globalmente così le altre funzioni sanno chi sei
+        window.ruoloUtente = utente.loggato ? utente.ruolo : 'guest';
 
         if (utente.loggato) {
-            // Se è admin, prepariamo il bottone speciale
-            let adminButton = '';
-            if (utente.ruolo == 'admin') {
-                adminButton = `<a href="admin_ordini.html" class="btn btn-danger me-3 fw-bold">⚙️ ADMIN</a>`;
+            // SISTEMA ANTI-INTRUSIONE: Se sei admin e provi ad andare nel carrello o nei tuoi ordini, ti rimbalza
+            const urlAttuale = window.location.href;
+            if (utente.ruolo === 'admin' && (urlAttuale.includes('carrello.html') || (urlAttuale.includes('ordini.html') && !urlAttuale.includes('admin_ordini.html')))) {
+                alert("⚠️ Sei un Amministratore. Non puoi effettuare acquisti.");
+                window.location.href = 'admin_ordini.html';
+                return;
             }
 
             if (menu) {
-                // INTEGRATO QUI IL BOTTONE ADMIN E CHIUSO CORRETTAMENTE IL TAG <b> e <h6>
-                menu.innerHTML = `
-                    ${adminButton}
-                    <h6 class="navbar-text text-white me-3 text-decoration-none" style="cursor:pointer; transition: 0.2s;">
-                        👤 Ciao, <b>${utente.nome}</b>
-                    </h6>
-                    <a href="ordini.html" class="btn btn-outline-info me-2">I miei Ordini</a>
-                    <a href="carrello.html" class="btn btn-warning me-2">🛒 CARRELLO</a>
-                    <button onclick="eseguiLogout()" class="btn btn-outline-danger">ESCI</button>
-                `;
+                if (utente.ruolo === 'admin') {
+                    // NAVBAR ADMIN: Niente carrello, niente "i miei ordini"
+                    menu.innerHTML = `
+                        <a href="admin_ordini.html" class="btn btn-danger me-3 fw-bold">⚙️ ADMIN</a>
+                        <h6 class="navbar-text text-white me-3 mb-0 align-self-center text-decoration-none">
+                            👤 Ciao, <b>${utente.nome}</b>
+                        </h6>
+                        <button onclick="eseguiLogout()" class="btn btn-outline-danger">ESCI</button>
+                    `;
+                } else {
+                    // NAVBAR USER NORMALE: Vede tutto
+                    menu.innerHTML = `
+                        <h6 class="navbar-text text-white me-3 mb-0 align-self-center text-decoration-none">
+                            👤 Ciao, <b>${utente.nome}</b>
+                        </h6>
+                        <a href="ordini.html" class="btn btn-outline-info me-2">I miei Ordini</a>
+                        <a href="carrello.html" class="btn btn-warning me-2">🛒 CARRELLO</a>
+                        <button onclick="eseguiLogout()" class="btn btn-outline-danger">ESCI</button>
+                    `;
+                }
             }
         } else {
-            // Se la pagina (es. carrello) richiede il login assoluto, lo cacciamo
+            // Se non sei loggato
             if (richiedeLogin) {
                 window.location.href = 'login.html';
             } else if (menu) {
-                // Altrimenti gli mostriamo i bottoni per accedere
                 menu.innerHTML = `
                     <a href="login.html" class="btn btn-outline-light me-2">LOGIN</a>
                     <a href="registrazione.html" class="btn btn-outline-light me-2">REGISTRATI</a>
@@ -100,28 +112,18 @@ let categoriaAttiva = null;
 
 async function caricaCatalogo(idCategoria = undefined, testoRicerca = null) {
     try {
-        // 1. GESTIONE STATO CATEGORIA
-        // Se passiamo un ID (es. cliccando un bottone categoria), lo salviamo in memoria.
-        // Se passiamo null (cliccando "Tutti"), puliamo la memoria.
-        // Se non passiamo nulla (undefined), manteniamo quello che c'è in memoria.
-        if (idCategoria !== undefined) {
-            categoriaAttiva = idCategoria;
-        }
+        if (idCategoria !== undefined) categoriaAttiva = idCategoria;
 
-        // 2. LETTURA INPUT E TENDINA
         const inputRicerca = document.getElementById('barra-ricerca');
         const selectOrdine = document.getElementById('filtro-ordine');
-        
         const testoReale = testoRicerca !== null ? testoRicerca : (inputRicerca ? inputRicerca.value : '');
         const ordineReale = selectOrdine ? selectOrdine.value : 'nuovi';
 
-        // 3. COSTRUZIONE URL DINAMICO
         let urlApi = '../api/prodotti.php?';
         if (categoriaAttiva !== null) urlApi += `categoria=${categoriaAttiva}&`;
         if (testoReale.trim() !== '') urlApi += `search=${encodeURIComponent(testoReale)}&`;
         urlApi += `sort=${ordineReale}`;
 
-        // 4. CHIAMATA E RENDER
         const risposta = await fetch(urlApi);
         const prodotti = await risposta.json();
         const contenitore = document.getElementById('catalogo');
@@ -133,6 +135,14 @@ async function caricaCatalogo(idCategoria = undefined, testoRicerca = null) {
 
         contenitore.innerHTML = ''; 
         prodotti.forEach(prodotto => {
+            // IL CONTROLLO SUL BOTTONE!
+            let bottoneAzione = '';
+            if (window.ruoloUtente === 'admin') {
+                bottoneAzione = `<button class="btn btn-outline-secondary mt-3 fw-bold" disabled>MODALITÀ ADMIN</button>`;
+            } else {
+                bottoneAzione = `<button class="btn btn-success mt-3 fw-bold" onclick="aggiungiAlCarrello(${prodotto.id_prodotto}, false)">AGGIUNGI AL CARRELLO</button>`;
+            }
+
             contenitore.innerHTML += `
                 <div class="col-md-4 col-sm-6 mb-4">
                     <div class="card h-100 shadow-sm border-secondary" style="background-color: #1c1c1c;">
@@ -147,9 +157,7 @@ async function caricaCatalogo(idCategoria = undefined, testoRicerca = null) {
                                 </a>
                             </h5>
                             <h4 class="mt-auto fw-bold" style="color: #d90429;">€ ${prodotto.prezzo}</h4>
-                            <button class="btn btn-success mt-3 fw-bold" onclick="aggiungiAlCarrello(${prodotto.id_prodotto}, false)">
-                                AGGIUNGI AL CARRELLO
-                            </button>
+                            ${bottoneAzione}
                         </div>
                     </div>
                 </div>`;
@@ -159,9 +167,7 @@ async function caricaCatalogo(idCategoria = undefined, testoRicerca = null) {
     }
 }
 
-// Funzione chiamata dal tasto "Cerca" o quando si cambia la tendina di ordinamento (onchange)
 function eseguiRicerca() {
-    // Passiamo "undefined" così non sovrascrive la categoria attualmente selezionata
     caricaCatalogo(undefined);
 }
 
@@ -173,55 +179,40 @@ document.addEventListener('DOMContentLoaded', () => {
     const boxSuggerimenti = document.getElementById('suggerimenti-ricerca');
 
     if (inputRicerca && boxSuggerimenti) {
-        
-        // 1. Cerca quando premi Invio
         inputRicerca.addEventListener('keypress', function (e) {
             if (e.key === 'Enter') {
-                boxSuggerimenti.classList.add('d-none'); // Nascondi tendina
+                boxSuggerimenti.classList.add('d-none');
                 eseguiRicerca();
             }
         });
 
-        // 2. AUTOCOMPLETE: AJAX mentre digiti
         inputRicerca.addEventListener('input', async function () {
             const testo = this.value.trim();
-            
-            // Se hai scritto meno di 2 lettere, nascondiamo la tendina per non intasare il server
             if (testo.length < 2) {
                 boxSuggerimenti.classList.add('d-none');
                 return;
             }
-
             try {
-                // Chiamata AJAX silenziosa al nostro PHP
                 const risposta = await fetch(`../api/prodotti.php?search=${encodeURIComponent(testo)}`);
                 const prodotti = await risposta.json();
-
-                boxSuggerimenti.innerHTML = ''; // Svuoto i vecchi risultati
-
+                boxSuggerimenti.innerHTML = '';
                 if (prodotti.length > 0) {
                     prodotti.forEach(prodotto => {
                         const li = document.createElement('li');
                         li.className = 'list-group-item list-group-item-action d-flex align-items-center';
-                        
-                        // Oltre al nome, ci mettiamo anche una miniatura dello strumento! Effetto super premium.
                         li.innerHTML = `
                             <img src="${prodotto.immagine_url}" style="width: 40px; height: 40px; object-fit: contain; margin-right: 15px; background-color: #fff; border-radius: 4px; padding: 2px;">
                             <span>${prodotto.nome}</span>
                         `;
-
-                        // Cosa succede se clicco su un suggerimento?
                         li.addEventListener('click', () => {
-                            inputRicerca.value = prodotto.nome; // Inserisco il nome nella barra
-                            boxSuggerimenti.classList.add('d-none'); // Chiudo la tendina
-                            eseguiRicerca(); // Filtro le card sotto
+                            inputRicerca.value = prodotto.nome;
+                            boxSuggerimenti.classList.add('d-none');
+                            eseguiRicerca();
                         });
-
                         boxSuggerimenti.appendChild(li);
                     });
-                    boxSuggerimenti.classList.remove('d-none'); // Mostro la tendina
+                    boxSuggerimenti.classList.remove('d-none');
                 } else {
-                    // Se non trova niente
                     boxSuggerimenti.innerHTML = '<li class="list-group-item text-muted">Nessuno strumento trovato...</li>';
                     boxSuggerimenti.classList.remove('d-none');
                 }
@@ -230,7 +221,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // 3. Nascondi la tendina se l'utente clicca fuori dalla barra
         document.addEventListener('click', function(e) {
             if (!inputRicerca.contains(e.target) && !boxSuggerimenti.contains(e.target)) {
                 boxSuggerimenti.classList.add('d-none');
@@ -243,15 +233,11 @@ async function caricaDettaglio() {
     const urlParams = new URLSearchParams(window.location.search);
     const idProdotto = urlParams.get('id');
 
-    if (!idProdotto) {
-        window.location.href = 'index.html';
-        return;
-    }
+    if (!idProdotto) { window.location.href = 'index.html'; return; }
 
     try {
         const rispostaProdotto = await fetch(`../api/prodotto.php?id=${idProdotto}`);
         const prodotto = await rispostaProdotto.json();
-
         if (!rispostaProdotto.ok) throw new Error(prodotto.errore);
 
         const rispostaCarrello = await fetch('../api/carrello.php', { cache: 'no-store' });
@@ -269,9 +255,15 @@ async function caricaDettaglio() {
         let boxDisponibilitaHTML = '';
         let bottoneCarrelloHTML = '';
 
-        if (stockEffettivo > 0) {
+        // IL CONTROLLO SUL BOTTONE NELLA PAGINA DEL PRODOTTO!
+        if (window.ruoloUtente === 'admin') {
+            boxDisponibilitaHTML = `<strong>Disponibilità:</strong> ${prodotto.giacenza} pezzi in magazzino (Vista Admin)`;
+            bottoneCarrelloHTML = `
+                <button class="btn btn-outline-secondary btn-lg w-100 py-3 mt-3 fw-bold" disabled>
+                    GLI ADMIN NON ACQUISTANO
+                </button>`;
+        } else if (stockEffettivo > 0) {
             boxDisponibilitaHTML = `<strong>Disponibilità:</strong> ${stockEffettivo} pezzi in magazzino (Pronta consegna)`;
-            // Passo "true" al bottone per fargli ricaricare la pagina live
             bottoneCarrelloHTML = `
                 <button class="btn btn-success btn-lg w-100 py-3 mt-3 fw-bold" onclick="aggiungiAlCarrello(${prodotto.id_prodotto}, true)">
                     AGGIUNGI AL CARRELLO
@@ -302,7 +294,6 @@ async function caricaDettaglio() {
                 <div class="alert border-secondary text-light" style="background-color: #222;">
                     ${boxDisponibilitaHTML}
                 </div>
-
                 ${bottoneCarrelloHTML}
             </div>
         `;
@@ -310,7 +301,6 @@ async function caricaDettaglio() {
         document.getElementById('dettaglio-prodotto').innerHTML = `<div class="alert alert-danger bg-dark border-danger text-danger">Errore: ${errore.message}</div>`;
     }
 }
-
 
 // ==========================================
 // 3. FUNZIONI CARRELLO E CHECKOUT (carrello.html)
@@ -359,12 +349,10 @@ async function caricaDatiCarrello() {
             `;
         });
 
-        // ... (dopo il forEach del carrello)
         document.getElementById('totale-articoli').innerText = dati.totale_articoli;
         document.getElementById('totale-euro').innerText = dati.totale_euro;
         document.getElementById('btn-checkout').disabled = false;
 
-        // NOVITÀ: Tiriamo giù l'indirizzo salvato per autocompilare l'input del carrello
         try {
             const rispProf = await fetch('../api/profilo.php');
             const datiProf = await rispProf.json();
@@ -398,43 +386,66 @@ async function rimuoviDalCarrello(idProdotto) {
     } catch (errore) { console.error(errore); }
 }
 
-async function eseguiCheckout() {
-    const btn = document.getElementById('btn-checkout');
-    const indirizzoInput = document.getElementById('indirizzo-spedizione');
-    const indirizzo = indirizzoInput ? indirizzoInput.value.trim() : '';
+function eseguiCheckout(e) {
+    if(e) e.preventDefault();
+    const indirizzo = document.getElementById('indirizzo-spedizione').value.trim();
+    if (!indirizzo) { alert("⚠️ Inserisci un indirizzo per procedere!"); return; }
 
-    // Blocco anti-furbetti se l'indirizzo è vuoto
-    if (!indirizzo) {
-        alert("⚠️ Devi inserire un indirizzo di spedizione per procedere!");
-        return;
+    const metodo = document.getElementById('metodo-pagamento').value;
+    if (metodo === 'postepay' || metodo === 'carta') {
+        // Previene la creazione di modali infinite se clicchi più volte
+        const modalEl = document.getElementById('modalPostepay');
+        let modal = bootstrap.Modal.getInstance(modalEl);
+        if (!modal) {
+            modal = new bootstrap.Modal(modalEl);
+        }
+        modal.show();
+    } else {
+        processaOrdineBackend(indirizzo);
     }
+}
 
-    btn.disabled = true;
-    btn.innerHTML = 'ELABORAZIONE...';
+function elaboraPagamentoFittizio() {
+    document.getElementById('btn-paga-sandbox').classList.add('d-none');
+    document.getElementById('pp-spinner').classList.remove('d-none');
 
+    setTimeout(() => {
+        const modalEl = document.getElementById('modalPostepay');
+        
+        // RIPRISTINO LA MODALE: Nascondo la rotellina e rimetto il tasto (risolve il loop di caricamento)
+        document.getElementById('btn-paga-sandbox').classList.remove('d-none');
+        document.getElementById('pp-spinner').classList.add('d-none');
+        
+        bootstrap.Modal.getInstance(modalEl).hide();
+        processaOrdineBackend(document.getElementById('indirizzo-spedizione').value.trim());
+    }, 2500);
+}
+
+async function processaOrdineBackend(indirizzo) {
+    const btn = document.getElementById('btn-checkout');
+    btn.disabled = true; btn.innerHTML = 'ELABORAZIONE...';
     try {
-        // Inviamo anche l'indirizzo nel body
+        // IL FIX DELL'INDIRIZZO: Ora invia { indirizzo: indirizzo } come vuole il tuo file PHP
         const risposta = await fetch('../api/checkout.php', { 
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            method: 'POST', 
+            headers: { 'Content-Type': 'application/json' }, 
             body: JSON.stringify({ indirizzo: indirizzo }) 
         });
-        
         const risultato = await risposta.json();
-
-        if (risposta.ok) {
-            alert("🎉 " + risultato.messaggio + " (Ordine #" + risultato.id_ordine + ")");
-            // Li mandiamo alla pagina ordini per farli godere
+        
+        if (risposta.ok) { 
+            alert("🎉 " + risultato.messaggio + " (Transazione Approvata)"); 
             window.location.href = 'ordini.html'; 
-        } else {
-            alert("Errore: " + risultato.errore);
-            btn.disabled = false;
-            btn.innerHTML = 'PROCEDI AL PAGAMENTO';
+        } else { 
+            alert("Errore: " + risultato.errore); 
+            // Ripristino il bottone originale in caso di errore
+            btn.disabled = false; 
+            btn.innerHTML = 'PROCEDI AL PAGAMENTO'; 
         }
-    } catch (errore) {
-        alert("Errore di connessione.");
-        btn.disabled = false;
-        btn.innerHTML = 'PROCEDI AL PAGAMENTO';
+    } catch (errore) { 
+        alert("Errore di rete."); 
+        btn.disabled = false; 
+        btn.innerHTML = 'PROCEDI AL PAGAMENTO'; 
     }
 }
 
@@ -442,9 +453,6 @@ async function eseguiCheckout() {
 // 4. FUNZIONI ORDINI (ordini.html)
 // ==========================================
 
-// ==========================================
-// FUNZIONI ORDINI UTENTE NORMALE
-// ==========================================
 async function caricaOrdini() {
     try {
         const risp = await fetch('../api/ordini.php');
@@ -493,134 +501,7 @@ async function caricaOrdini() {
 }
 
 // ==========================================
-// 5. INIZIALIZZATORE (Il cervello del sito)
-// ==========================================
-// Questa parte parte in automatico appena la pagina si carica.
-// Guarda gli ID nell'HTML per capire in che pagina si trova l'utente.
-
-document.addEventListener('DOMContentLoaded', () => {
-
-    // 1. Pagine protette (se non sei loggato ti butto fuori)
-    if (document.getElementById('lista-carrello') || document.getElementById('lista-ordini')) {
-        controllaSessione(true).then(() => {
-            aggiornaContatoreCarrello();
-            if (document.getElementById('lista-carrello')) caricaDatiCarrello();
-            if (document.getElementById('lista-ordini')) caricaOrdini();
-        });
-    } 
-    // 2. Pagine pubbliche (puoi vederle anche senza login)
-    else if (document.getElementById('catalogo') || document.getElementById('dettaglio-prodotto')) {
-        controllaSessione(false).then(() => {
-            aggiornaContatoreCarrello();
-            if (document.getElementById('catalogo')) caricaCatalogo();
-            if (document.getElementById('dettaglio-prodotto')) caricaDettaglio();
-        });
-    }
-
-    // 3. Pagina di Login
-    const formLogin = document.getElementById('formLogin');
-    if (formLogin) {
-        formLogin.addEventListener('submit', async function(event) {
-            event.preventDefault();
-            const dati = {
-                email: document.getElementById('email').value,
-                password: document.getElementById('password').value
-            };
-            const box = document.getElementById('messaggio-alert');
-            
-            try {
-                const risposta = await fetch('../api/login.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(dati)
-                });
-                const risultato = await risposta.json();
-
-                if (risposta.ok) {
-                    box.innerHTML = `<div class="alert alert-success bg-dark border-success text-success">${risultato.messaggio}</div>`;
-                    setTimeout(() => { window.location.href = 'index.html'; }, 1000);
-                } else {
-                    box.innerHTML = `<div class="alert alert-danger bg-dark border-danger text-danger">${risultato.errore}</div>`;
-                }
-            } catch (err) {
-                box.innerHTML = `<div class="alert alert-danger">Errore di rete.</div>`;
-            }
-        });
-    }
-
-    // 4. Pagina di Registrazione
-    const formReg = document.getElementById('formRegistrazione');
-    if (formReg) {
-        formReg.addEventListener('submit', async function(event) {
-            event.preventDefault();
-            const dati = {
-                nome: document.getElementById('nome').value,
-                cognome: document.getElementById('cognome').value,
-                email: document.getElementById('email').value,
-                password: document.getElementById('password').value
-            };
-            const box = document.getElementById('messaggio-alert');
-            
-            try {
-                const risposta = await fetch('../api/register.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(dati)
-                });
-                const risultato = await risposta.json();
-
-                if (risposta.ok) {
-                    box.innerHTML = `<div class="alert alert-success bg-dark border-success text-success">${risultato.messaggio} Ti stiamo portando al Login...</div>`;
-                    setTimeout(() => { window.location.href = 'login.html'; }, 1500);
-                } else {
-                    box.innerHTML = `<div class="alert alert-danger bg-dark border-danger text-danger">${risultato.errore}</div>`;
-                }
-            } catch (err) {
-                box.innerHTML = `<div class="alert alert-danger">Errore di rete.</div>`;
-            }
-        });
-    }
-
-    // PAGINA PROFILO UTENTE
-    const formProfilo = document.getElementById('formProfilo');
-    if (formProfilo) {
-        controllaSessione(true).then(async () => {
-            aggiornaContatoreCarrello();
-            // Carica i dati attuali
-            const risp = await fetch('../api/profilo.php');
-            const dati = await risp.json();
-            document.getElementById('nome-profilo').value = dati.nome + ' ' + (dati.cognome || '');
-            document.getElementById('email-profilo').value = dati.email;
-            document.getElementById('indirizzo-profilo').value = dati.indirizzo_spedizione || '';
-        });
-
-        // Al salvataggio
-        formProfilo.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const payload = {
-                indirizzo: document.getElementById('indirizzo-profilo').value,
-                password: document.getElementById('password-profilo').value
-            };
-            try {
-                const risp = await fetch('../api/profilo.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                const ris = await risp.json();
-                if (risp.ok) {
-                    alert("✅ " + ris.messaggio);
-                    document.getElementById('password-profilo').value = ''; // Pulisce la password per sicurezza
-                } else {
-                    alert("Errore: " + ris.errore);
-                }
-            } catch (err) { alert("Errore di rete"); }
-        });
-    }
-});
-
-// ==========================================
-// 5. FUNZIONI PANNELLO ADMIN (NUOVE!)
+// 5. FUNZIONI PANNELLO ADMIN
 // ==========================================
 async function caricaTuttiOrdini() {
     try {
@@ -707,9 +588,6 @@ async function aggiornaStato(idOrdine) {
     }
 }
 
-// ==========================================
-// 6. FUNZIONI PANNELLO ADMIN - PRODOTTI
-// ==========================================
 async function caricaAdminProdotti() {
     try {
         const risposta = await fetch('../api/admin_prodotti.php');
@@ -722,10 +600,7 @@ async function caricaAdminProdotti() {
         contenitore.innerHTML = '';
 
         prodotti.forEach(p => {
-            // Colore rosso se la giacenza è zero
             const giacenzaStyle = p.giacenza <= 0 ? 'color: #d90429; font-weight: bold;' : '';
-            
-            // Creiamo un oggetto JSON sicuro da passare al bottone "Modifica"
             const jsonProdotto = JSON.stringify(p).replace(/'/g, "&apos;").replace(/"/g, "&quot;");
 
             contenitore.innerHTML += `
@@ -747,13 +622,11 @@ async function caricaAdminProdotti() {
     }
 }
 
-// Mostra e nasconde il form
 function apriFormProdotto(prodotto = null) {
     document.getElementById('box-form-prodotto').classList.remove('d-none');
     const form = document.getElementById('formProdotto');
     
     if (prodotto) {
-        // MODIFICA: Riempiamo i campi con i dati esistenti
         document.getElementById('titolo-form').innerText = "Modifica Prodotto";
         document.getElementById('id_prodotto').value = prodotto.id_prodotto;
         document.getElementById('nome_prodotto').value = prodotto.nome;
@@ -763,7 +636,6 @@ function apriFormProdotto(prodotto = null) {
         document.getElementById('immagine_prodotto').value = prodotto.immagine_url;
         document.getElementById('descrizione_prodotto').value = prodotto.descrizione;
     } else {
-        // NUOVO: Svuotiamo il form
         document.getElementById('titolo-form').innerText = "Aggiungi Nuovo Prodotto";
         form.reset();
         document.getElementById('id_prodotto').value = '';
@@ -774,46 +646,6 @@ function chiudiFormProdotto() {
     document.getElementById('box-form-prodotto').classList.add('d-none');
 }
 
-// Salvataggio (Insert o Update)
-document.addEventListener('DOMContentLoaded', () => {
-    const formProd = document.getElementById('formProdotto');
-    if (formProd) {
-        formProd.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const dati = {
-                id_prodotto: document.getElementById('id_prodotto').value,
-                nome: document.getElementById('nome_prodotto').value,
-                categoria: document.getElementById('categoria_prodotto').value,
-                prezzo: document.getElementById('prezzo_prodotto').value,
-                giacenza: document.getElementById('giacenza_prodotto').value,
-                immagine_url: document.getElementById('immagine_prodotto').value,
-                descrizione: document.getElementById('descrizione_prodotto').value
-            };
-
-            try {
-                const risposta = await fetch('../api/admin_prodotti.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(dati)
-                });
-                const risultato = await risposta.json();
-                
-                if (risposta.ok) {
-                    alert("✅ " + risultato.messaggio);
-                    chiudiFormProdotto();
-                    caricaAdminProdotti(); // Ricarica la tabella
-                } else {
-                    alert("Errore: " + risultato.errore);
-                }
-            } catch (err) {
-                alert("Errore di rete durante il salvataggio.");
-            }
-        });
-    }
-});
-
-// Eliminazione
 async function eliminaProdotto(id) {
     if(!confirm("⚠️ ATTENZIONE: Vuoi davvero eliminare questo prodotto dal catalogo?")) return;
     
@@ -835,12 +667,161 @@ async function eliminaProdotto(id) {
     }
 }
 
+async function caricaAdminCategorie() {
+    try {
+        const risposta = await fetch('../api/admin_categorie.php');
+        const categorie = await risposta.json();
+        const contenitore = document.getElementById('tabella-categorie');
+        if (!contenitore) return;
+        contenitore.innerHTML = '';
+        categorie.forEach(c => {
+            contenitore.innerHTML += `<tr><td class="fw-bold">${c.id_categoria}</td><td>${c.nome}</td><td class="text-end"><button class="btn btn-sm btn-outline-danger" onclick="eliminaCategoria(${c.id_categoria})">🗑️ Elimina</button></td></tr>`;
+        });
+    } catch (e) {}
+}
+
+async function aggiungiCategoria(e) {
+    e.preventDefault();
+    
+    const dati = {
+        nome: document.getElementById('nome_categoria').value,
+        descrizione: document.getElementById('desc_categoria').value // Recupera la descrizione
+    };
+
+    try {
+        const risposta = await fetch('../api/admin_categorie.php', { 
+            method: 'POST', 
+            headers: { 'Content-Type': 'application/json' }, 
+            body: JSON.stringify(dati) 
+        });
+        
+        const res = await risposta.json();
+        
+        if (risposta.ok) { 
+            alert("✅ " + res.messaggio); 
+            // Pulisce i campi dopo il salvataggio
+            document.getElementById('nome_categoria').value = ''; 
+            document.getElementById('desc_categoria').value = ''; 
+            caricaAdminCategorie(); 
+        } else {
+            alert("❌ " + res.errore);
+        }
+    } catch(err) {
+        console.error("Errore aggiunta categoria:", err);
+    }
+}
+
+async function eliminaCategoria(id) {
+    if(!confirm("Sicuro di voler eliminare questa categoria?")) return;
+    try {
+        const risposta = await fetch('../api/admin_categorie.php', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id_categoria: id }) });
+        if(risposta.ok) caricaAdminCategorie(); else alert("❌ " + (await risposta.json()).errore);
+    } catch(err) {}
+}
+
+async function caricaStatisticheAdmin() {
+    try {
+        // Aggiungi { cache: 'no-store' } alla fetch!
+        const r = await fetch('../api/admin_stats.php', { cache: 'no-store' }); 
+        const d = await r.json();
+
+        if (d.errore) {
+            console.error("Errore server:", d.errore);
+            return;
+        }
+
+        // Usiamo Number() e un fallback a 0 per evitare NaN e undefined a video
+        const ordini = d.totale_ordini || 0;
+        const incasso = Number(d.incasso_totale) || 0;
+
+        document.getElementById('stat-ordini').innerText = ordini;
+        document.getElementById('stat-incasso').innerText = `€ ${incasso.toFixed(2)}`;
+        
+        // Gestione Allerta Scorte (il terzo quadratino)
+        const boxScorte = document.getElementById('stat-scorte');
+        if (boxScorte) {
+            if (d.allerte_scorte && d.allerte_scorte.length > 0) {
+                boxScorte.innerHTML = d.allerte_scorte.map(p => 
+                    `<div class="text-danger">Low: ${p.nome} (${p.giacenza} pz)</div>`
+                ).join('');
+            } else {
+                boxScorte.innerHTML = '<div class="text-success">Scorte OK ✅</div>';
+            }
+        }
+
+        // Gestione Vendite Dettagliate
+        const boxV = document.getElementById('stat-vendite');
+        if (boxV) {
+            if (d.vendite && d.vendite.length > 0) {
+                boxV.innerHTML = d.vendite.map(v => `
+                    <div class="d-flex justify-content-between border-bottom border-secondary py-2">
+                        <span class="text-uppercase text-white">${v.stato}</span>
+                        <span class="text-muted">${v.numero_ordini} ordini</span>
+                        <strong class="text-success">€ ${Number(v.incasso).toFixed(2)}</strong>
+                    </div>
+                `).join('');
+            } else {
+                boxV.innerHTML = '<p class="text-muted">Nessuna vendita registrata.</p>';
+            }
+        }
+    } catch (e) {
+        console.error("Errore JS nel caricamento statistiche:", e);
+    }
+}
+
+
+// --- FUNZIONI PER RENDERE LE CATEGORIE DINAMICHE ---
+
+// 1. Riempie i bottoni nella Home Page
+async function caricaCategorieHome() {
+    const contenitore = document.getElementById('bottoni-categorie');
+    if (!contenitore) return; // Se non siamo nella home, si ferma
+
+    try {
+        const risposta = await fetch('../api/categorie.php');
+        const categorie = await risposta.json();
+        
+        // MODIFICA QUESTA RIGA (ho messo null al posto di undefined)
+        let html = `<button class="btn btn-outline-light text-uppercase fw-bold px-4 py-2" onclick="caricaCatalogo(null)">ALL GEAR</button>`;
+        
+        // Aggiungiamo un bottone per ogni categoria nel DB
+        categorie.forEach(c => {
+            html += `<button class="btn btn-outline-light text-uppercase fw-bold px-4 py-2" onclick="caricaCatalogo(${c.id_categoria})">${c.nome}</button>`;
+        });
+        
+        contenitore.innerHTML = html;
+    } catch (e) {
+        contenitore.innerHTML = '<span class="text-danger">Errore caricamento filtri.</span>';
+    }
+}
+
+// 2. Riempie la tendina nel pannello Admin Prodotti
+async function caricaTendinaCategorie() {
+    const select = document.getElementById('categoria_prodotto');
+    if (!select) return; // Se non siamo nella pagina admin_prodotti, si ferma
+
+    try {
+        const risposta = await fetch('../api/categorie.php');
+        const categorie = await risposta.json();
+        
+        select.innerHTML = '<option value="" disabled selected>Seleziona una categoria...</option>';
+        categorie.forEach(c => {
+            select.innerHTML += `<option value="${c.id_categoria}">${c.nome}</option>`;
+        });
+    } catch (e) {
+        console.error("Errore tendina categorie", e);
+    }
+}
+
+
+
+
 // ==========================================
 // 7. INIZIALIZZATORE (Il cervello del sito)
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
 
-    // 1. Pagine protette classiche
+    // Pagine protette carrello e ordini
     if (document.getElementById('lista-carrello') || document.getElementById('lista-ordini')) {
         controllaSessione(true).then(() => {
             aggiornaContatoreCarrello();
@@ -848,25 +829,34 @@ document.addEventListener('DOMContentLoaded', () => {
             if (document.getElementById('lista-ordini')) caricaOrdini();
         });
     } 
-    // 2. PAGINA ADMIN (NUOVO CONTROLLO!)
+    // PAGINA ADMIN ORDINI
     else if (document.getElementById('tabella-ordini')) {
         controllaSessione(true).then(() => {
             caricaTuttiOrdini();
+            caricaStatisticheAdmin(); // RICHIAMO CORRETTO DELLE STATISTICHE
         });
     }
-    // 3. Pagine pubbliche
-    else if (document.getElementById('catalogo') || document.getElementById('dettaglio-prodotto')) {
-        controllaSessione(false).then(() => {
-            aggiornaContatoreCarrello();
-            if (document.getElementById('catalogo')) caricaCatalogo();
-            if (document.getElementById('dettaglio-prodotto')) caricaDettaglio();
+    // PAGINA ADMIN CATEGORIE
+    else if (document.getElementById('tabella-categorie')) {
+        controllaSessione(true).then(() => {
+            caricaAdminCategorie(); // RICHIAMO CORRETTO CATEGORIE
         });
     }
-
     // PAGINA ADMIN PRODOTTI
     else if (document.getElementById('tabella-prodotti')) {
         controllaSessione(true).then(() => {
             caricaAdminProdotti();
+            caricaTendinaCategorie();
+        });
+    }
+    // Pagine pubbliche
+    else if (document.getElementById('catalogo') || document.getElementById('dettaglio-prodotto')) {
+        controllaSessione(false).then(() => {
+            aggiornaContatoreCarrello();
+            if (document.getElementById('catalogo')){ 
+                caricaCategorieHome();
+                caricaCatalogo();}
+            if (document.getElementById('dettaglio-prodotto')) caricaDettaglio();
         });
     }
 
@@ -926,6 +916,40 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } catch (err) {
                 box.innerHTML = `<div class="alert alert-danger">Errore di rete.</div>`;
+            }
+        });
+    }
+
+    // Form Prodotto (Admin)
+    const formProd = document.getElementById('formProdotto');
+    if (formProd) {
+        formProd.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const dati = {
+                id_prodotto: document.getElementById('id_prodotto').value,
+                nome: document.getElementById('nome_prodotto').value,
+                categoria: document.getElementById('categoria_prodotto').value,
+                prezzo: document.getElementById('prezzo_prodotto').value,
+                giacenza: document.getElementById('giacenza_prodotto').value,
+                immagine_url: document.getElementById('immagine_prodotto').value,
+                descrizione: document.getElementById('descrizione_prodotto').value
+            };
+            try {
+                const risposta = await fetch('../api/admin_prodotti.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(dati)
+                });
+                const risultato = await risposta.json();
+                if (risposta.ok) {
+                    alert("✅ " + risultato.messaggio);
+                    chiudiFormProdotto();
+                    caricaAdminProdotti();
+                } else {
+                    alert("Errore: " + risultato.errore);
+                }
+            } catch (err) {
+                alert("Errore di rete durante il salvataggio.");
             }
         });
     }
