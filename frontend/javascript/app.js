@@ -669,12 +669,33 @@ async function caricaAdminCategorie() {
 
 async function aggiungiCategoria(e) {
     e.preventDefault();
+    
+    const dati = {
+        nome: document.getElementById('nome_categoria').value,
+        descrizione: document.getElementById('desc_categoria').value // Recupera la descrizione
+    };
+
     try {
-        const risposta = await fetch('../api/admin_categorie.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nome: document.getElementById('nome_categoria').value }) });
+        const risposta = await fetch('../api/admin_categorie.php', { 
+            method: 'POST', 
+            headers: { 'Content-Type': 'application/json' }, 
+            body: JSON.stringify(dati) 
+        });
+        
         const res = await risposta.json();
-        if(risposta.ok) { alert("✅ " + res.messaggio); document.getElementById('nome_categoria').value = ''; caricaAdminCategorie(); } 
-        else alert("❌ " + res.errore);
-    } catch(err) {}
+        
+        if (risposta.ok) { 
+            alert("✅ " + res.messaggio); 
+            // Pulisce i campi dopo il salvataggio
+            document.getElementById('nome_categoria').value = ''; 
+            document.getElementById('desc_categoria').value = ''; 
+            caricaAdminCategorie(); 
+        } else {
+            alert("❌ " + res.errore);
+        }
+    } catch(err) {
+        console.error("Errore aggiunta categoria:", err);
+    }
 }
 
 async function eliminaCategoria(id) {

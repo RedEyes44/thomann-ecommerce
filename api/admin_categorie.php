@@ -13,10 +13,15 @@ if ($method === 'GET') {
     $stmt = $pdo->query("SELECT * FROM categorie ORDER BY nome ASC");
     echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
 } elseif ($method === 'POST') {
+    // ... dentro al blocco elseif ($method === 'POST')
     $dati = json_decode(file_get_contents("php://input"), true);
-    $stmt = $pdo->prepare("INSERT INTO categorie (nome) VALUES (?)");
-    $stmt->execute([$dati['nome']]);
-    echo json_encode(['messaggio' => 'Categoria aggiunta con successo']);
+    // Query aggiornata con la descrizione
+    $stmt = $pdo->prepare("INSERT INTO categorie (nome, descrizione) VALUES (?, ?)");
+    $stmt->execute([
+        $dati['nome'], 
+        $dati['descrizione'] ?? '' // Se manca, mette una stringa vuota invece di NULL
+    ]);
+echo json_encode(['messaggio' => 'Categoria aggiunta con successo']);
 } elseif ($method === 'DELETE') {
     $dati = json_decode(file_get_contents("php://input"), true);
     // Controllo di sicurezza per evitare di rompere i prodotti
